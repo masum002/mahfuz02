@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "Profile",
+      "description": "Public profile details of the developer.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the developer." },
+        "title": { "type": "string", "description": "Professional title (e.g., Full-Stack Developer)." },
+        "bio": { "type": "string", "description": "Short bio or description." },
+        "cvUrl": { "type": "string", "description": "Link to the CV/resume." },
+        "avatarUrl": { "type": "string", "description": "URL of the profile picture." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp of the last update." }
+      },
+      "required": ["name", "title", "bio"]
+    },
+    "Skill": {
+      "title": "Skill",
+      "description": "Technical skill categorized by area.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the skill." },
+        "category": { "type": "string", "description": "Category (Frontend, Backend, Tools, etc.)" },
+        "percentage": { "type": "integer", "description": "Proficiency percentage (0-100)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["name", "category", "percentage"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Portfolio project displaying work done.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Title of the project." },
+        "description": { "type": "string", "description": "Description of the project." },
+        "imageUrl": { "type": "string", "description": "URL of the project preview image." },
+        "liveUrl": { "type": "string", "description": "Link to the live demo." },
+        "githubUrl": { "type": "string", "description": "Link to GitHub repository." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["title", "description"]
+    },
+    "Contact": {
+      "title": "Contact",
+      "description": "Contact info and social media handles.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "description": "Email address." },
+        "phone": { "type": "string", "description": "Phone number." },
+        "address": { "type": "string", "description": "Physical address or location." },
+        "github": { "type": "string", "description": "GitHub profile URL." },
+        "linkedin": { "type": "string", "description": "LinkedIn profile URL." },
+        "twitter": { "type": "string", "description": "Twitter/X profile URL." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp of the last update." }
+      },
+      "required": ["email"]
+    }
+  },
+  "firestore": {
+    "/profile/{docId}": {
+      "schema": { "$ref": "#/entities/Profile" },
+      "description": "Main profile document. Target ID is usually 'main'."
+    },
+    "/skills/{skillId}": {
+      "schema": { "$ref": "#/entities/Skill" },
+      "description": "All technical skills categorized by type."
+    },
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/Project" },
+      "description": "All portfolio projects."
+    },
+    "/contacts/{docId}": {
+      "schema": { "$ref": "#/entities/Contact" },
+      "description": "Main contact settings. Target ID is usually 'main'."
+    }
+  }
+}

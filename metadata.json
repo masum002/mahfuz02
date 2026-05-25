@@ -1,0 +1,8 @@
+{
+  "name": "Dynamic Bio Portfolio Dashboard",
+  "description": "A modern, responsive, slate dark-themed developer Portfolio and Bio website built with React, Motion, and an integrated, secure Google Auth Firebase Admin Panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
