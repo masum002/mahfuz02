@@ -28,7 +28,17 @@ import ContactSection from './components/Contact';
 import AdminPanel from './components/AdminPanel';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'portfolio' | 'admin'>('portfolio');
+  // Safe initialization of view based on query parameters (?view=admin)
+  const getInitialView = (): 'portfolio' | 'admin' => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('view') === 'admin' ? 'admin' : 'portfolio';
+    } catch (e) {
+      return 'portfolio';
+    }
+  };
+
+  const [currentView, setCurrentView] = useState<'portfolio' | 'admin'>(getInitialView());
   const [currentTab, setCurrentTab] = useState<'home' | 'about' | 'skills' | 'projects' | 'contact'>('home');
   const [dotMenuOpen, setDotMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);

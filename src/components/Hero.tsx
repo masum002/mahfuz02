@@ -78,6 +78,52 @@ export default function Hero({
     element.style.left = '-9999px';
     element.style.top = '-9999px';
     element.style.width = '794px'; // A4 width at 96 DPI is 794px
+
+    let restoreStyles: (() => void) | null = null;
+    try {
+      // Find and rewrite css rules containing "oklch(" temporarily
+      const restoredRules: { sheet: CSSStyleSheet; ruleText: string; index: number }[] = [];
+      const sheets = Array.from(document.styleSheets);
+      
+      for (const sheet of sheets) {
+        try {
+          const rules = sheet.cssRules || sheet.rules;
+          if (!rules) continue;
+          
+          const rulesArray = Array.from(rules);
+          for (let i = rulesArray.length - 1; i >= 0; i--) {
+            const rule = rulesArray[i];
+            if (rule.cssText && rule.cssText.includes('oklch(')) {
+              restoredRules.push({
+                sheet,
+                ruleText: rule.cssText,
+                index: i
+              });
+              
+              // Safely swap oklch colors with compatible rgb format to satisfy html2canvas parser
+              const cleanRuleText = rule.cssText.replace(/oklch\([^)]+\)/g, 'rgb(124, 58, 237)');
+              sheet.deleteRule(i);
+              sheet.insertRule(cleanRuleText, i);
+            }
+          }
+        } catch (e) {
+          // Cross-origin CSS rules might throw access error inside iframe, ignore safely
+        }
+      }
+      
+      restoreStyles = () => {
+        for (const item of restoredRules.reverse()) {
+          try {
+            item.sheet.deleteRule(item.index);
+            item.sheet.insertRule(item.ruleText, item.index);
+          } catch (e) {
+            console.warn("Could not restore original style config: ", e);
+          }
+        }
+      };
+    } catch (e) {
+      console.error("Style prep failed: ", e);
+    }
     
     try {
       // Small timeout to allow images & styling to resolve fully
@@ -117,6 +163,10 @@ export default function Hero({
         window.open(profile.cvUrl, '_blank');
       }
     } finally {
+      // Restore dynamic styles if modified
+      if (restoreStyles) {
+        restoreStyles();
+      }
       // Restore hidden configuration
       element.style.display = 'none';
       setPdfCompiling(false);
@@ -404,7 +454,7 @@ export default function Hero({
         </div>
 
         {/* Footnote stamp branding */}
-        <div style={{ marginTop: '50px', borderTop: '1px solid #e2e8f0', paddingTop: '12px', display: 'flex', justifyBetween: 'space-between', alignItems: 'center' }}>
+        <div style={{ marginTop: '50px', borderTop: '1px solid #e2e8f0', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '9px', color: '#94a3b8', fontWeight: '700', fontFamily: 'monospace' }}>
             PORTFOLIO DIGITAL ARTIFACT SYSTEMS
           </span>

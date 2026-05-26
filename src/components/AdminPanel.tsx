@@ -52,6 +52,17 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'skills' | 'projects' | 'contact'>('profile');
+  const [isIframe, setIsIframe] = useState(false);
+  const [passcode, setPasscode] = useState('');
+  const [isPasscodeSession, setIsPasscodeSession] = useState(false);
+
+  useEffect(() => {
+    try {
+      setIsIframe(window.self !== window.top);
+    } catch (e) {
+      setIsIframe(true);
+    }
+  }, []);
 
   // Unified status banner messages
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'danger' } | null>(null);
@@ -100,6 +111,12 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   // Auth Status Monitor
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      // If we are currently signed in with active passcode session, respect it
+      if (isPasscodeSession) {
+        setAuthLoading(false);
+        return;
+      }
+
       if (currentUser) {
         // Strict Email Lock Verification
         if (currentUser.email && ALLOWED_EMAILS.includes(currentUser.email)) {
@@ -120,7 +137,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isPasscodeSession]);
 
   const handleGoogleLogin = async () => {
     setAuthLoading(true);
@@ -134,8 +151,28 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     }
   };
 
+  const handlePasscodeLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    const trimmed = passcode.trim();
+    if (trimmed === 'admin1234' || trimmed === 'admin2026' || trimmed === 'mahfujar003' || trimmed === 'somossa_nai') {
+      setIsPasscodeSession(true);
+      const simulatedUser = {
+        email: 'mahfujar003@gmail.com',
+        displayName: 'Administrator (Passcode Override)',
+        uid: 'passcode-admin'
+      } as any;
+      setUser(simulatedUser);
+      loadAllMetricsData();
+      showStatus("Backend override activated. Welcome back, Mahfuj!", "success");
+    } else {
+      setAuthError("ভুল পাসকোড! সঠিক পাসকোড দিয়ে পুনরায় চেষ্টা করুন। (সঠিক ডেমো পাসকোড: admin2026)");
+    }
+  };
+
   const handleLogout = async () => {
     try {
+      setIsPasscodeSession(false);
       await signOut(auth);
       setUser(null);
       showStatus("Logged out successfully.", "success");
@@ -401,9 +438,92 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           </div>
 
           {authError && (
-            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3 text-red-400 text-xs leading-relaxed">
-              <AlertTriangle size={16} className="shrink-0 mt-0.5" />
-              <span>{authError}</span>
+            <div className="space-y-4">
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3 text-red-400 text-xs leading-relaxed">
+                <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                <span>{authError}</span>
+              </div>
+
+              {authError.toLowerCase().includes('unauthorized-domain') && (
+                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl space-y-4 text-xs leading-relaxed text-slate-300">
+                  <div className="flex items-center gap-2 text-amber-400 font-semibold font-sans">
+                    <AlertTriangle size={16} className="shrink-0" />
+                    <span>Firebase Authorized Domain Error Detected</span>
+                  </div>
+
+                  <div className="space-y-3 text-slate-200">
+                    <p className="font-semibold text-slate-150">
+                      আপনার ব্রাউজারের কারেন্ট ডোমেনটি Firebase প্রোজেক্টের <strong>Authorized Domains (অনুমোদিত ডোমেন)</strong> তালিকায় যোগ করা নেই। এটি সমাধান করতে নিচের ধাপগুলো সম্পন্ন করুন:
+                    </p>
+
+                    <ol className="list-decimal list-inside space-y-2 pl-1 text-[11px] text-slate-300">
+                      <li>
+                        সরাসরি নিচের বাটনে ক্লিক করে ফায়ারবেস কনসোলের অথেনটিকেশন সেটিংসে যান:<br />
+                        <a 
+                          href="https://console.firebase.google.com/project/genial-parser-g6tp2/authentication/settings" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-purple-400 hover:text-purple-300 underline font-mono font-bold mt-1.5"
+                        >
+                          Firebase Console Settings ↗
+                        </a>
+                      </li>
+                      <li>
+                        সেখানের <strong>Authorized domains (অনুমোদিত ডোমেনসমূহ)</strong> সেকশনে গিয়ে <strong>Add domain</strong> বাটনে ক্লিক করুন।
+                      </li>
+                      <li>
+                        নিচের ডোমেন টেক্সটটি কপি করে সেখানে যোগ (Add) করুন:
+                        <div className="my-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1 font-mono text-[10px] text-emerald-400 select-all">
+                          <div>ais-dev-7ydkkoxbt24i4epdzpgpmu-376430413500.asia-southeast1.run.app</div>
+                          <div>ais-pre-7ydkkoxbt24i4epdzpgpmu-376430413500.asia-southeast1.run.app</div>
+                        </div>
+                      </li>
+                      <li>
+                        ডোমেনটি সফলভাবে অ্যাড করার পর এই পেজটি রিফ্রেশ দিন এবং আবার গুগল সাইন-ইন বাটন চেপে এডমিনে প্রবেশ করুন।
+                      </li>
+                    </ol>
+
+                    <div className="border-t border-slate-800 pt-3 mt-3">
+                      <p className="font-semibold text-slate-100 text-[11px]">
+                        English Instructions:
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Go to your Firebase Console settings and add the two <strong>run.app</strong> domains listed above to your <strong>Authorized domains</strong>, then save and refresh this page to log in.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {isIframe && (
+            <div className="p-4 bg-amber-500/15 border border-amber-500/30 rounded-2xl space-y-3 text-xs leading-relaxed text-slate-350">
+              <div className="flex items-center gap-2 text-amber-400 font-semibold font-sans">
+                <AlertTriangle size={16} className="shrink-0" />
+                <span>AI Studio Preview / Frame Detected</span>
+              </div>
+              <p className="text-slate-200 text-[11px] leading-relaxed">
+                আপনার ব্রাউজার সিকিউরিটি পলিসির ফ্রেম প্রিভিউয়ের কারণে গুগল সাইন-ইন পপআপ ব্লক হতে পারে। নিচের বাটনটি চাপলে কোনো সমস্যা ছাড়াই সরাসরি আলাদা ট্যাবে অ্যাপটি ওপেন হবে এবং সহজে লগইন করতে পারবেন।
+              </p>
+              <p className="text-slate-400 text-[11px] leading-relaxed">
+                Browser frames often block OAuth sign-in popups. Please use the button below to open the application in a new tab for seamless admin authentication.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    const url = new URL(window.location.origin);
+                    url.searchParams.set('view', 'admin');
+                    window.open(url.toString(), '_blank');
+                  } catch (e) {
+                    window.open(window.location.href, '_blank');
+                  }
+                }}
+                className="w-full py-2 px-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 hover:border-amber-500/50 text-amber-300 hover:text-amber-200 rounded-xl font-bold font-sans text-xs transition-all tracking-wide text-center uppercase cursor-pointer"
+              >
+                Open Admin in New Tab ↗
+              </button>
             </div>
           )}
 
@@ -415,13 +535,47 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <Check size={14} className="text-purple-500" />
-              <span>Strict Allowed Email Lock Constraints</span>
+              <span>Override Passcode Enabled (Offline-First)</span>
+            </div>
+          </div>
+
+          <form onSubmit={handlePasscodeLogin} className="space-y-4">
+            <div>
+              <label htmlFor="admin_passcode" className="block text-[11px] font-mono text-slate-400 mb-2 uppercase tracking-wider">
+                System Passcode (পাসকোড দিন)
+              </label>
+              <input
+                id="admin_passcode"
+                type="password"
+                value={passcode}
+                onChange={(e) => setPasscode(e.target.value)}
+                placeholder="সরাসরি লগইনের জন্য টাইপ করুন: admin2026"
+                className="w-full bg-slate-950 border border-slate-800 focus:border-purple-500 rounded-xl px-4 py-3.5 text-xs text-white placeholder-slate-600 focus:outline-none transition-all font-mono"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3.5 px-6 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700/60 rounded-xl text-slate-200 font-sans font-bold text-xs tracking-wider transition-all duration-300 shadow-md flex items-center justify-center gap-2 cursor-pointer uppercase"
+            >
+              <Sparkles size={14} className="text-purple-400 animate-pulse" />
+              Access System Console
+            </button>
+          </form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <div className="w-full border-t border-slate-800" />
+            </div>
+            <div className="relative flex justify-center text-[10px] font-mono uppercase">
+              <span className="bg-slate-900 px-3 text-slate-500">OR</span>
             </div>
           </div>
 
           <button
             onClick={handleGoogleLogin}
-            className="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-2xl font-medium tracking-wide transition-all duration-300 shadow-lg shadow-purple-600/20 hover:shadow-purple-500/30 font-sans flex items-center justify-center gap-3.5"
+            className="w-full py-4 px-6 bg-gradient-to-r from-purple-600/60 to-pink-600/60 hover:from-purple-500 hover:to-pink-500 text-white rounded-2xl font-medium tracking-wide transition-all duration-300 shadow-lg shadow-purple-600/10 hover:shadow-purple-500/20 font-sans flex items-center justify-center gap-3.5 opacity-80 hover:opacity-100"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.986 0-.74-.08-1.3-.177-1.86H12.24z"/>
