@@ -12,7 +12,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage, OperationType, handleFirestoreError } from './firebase';
+import { db, storage, OperationType, handleFirestoreError, isConfigured } from './firebase';
 import { Profile, Skill, Project, Contact } from './types';
 import { 
   DEFAULT_PROFILE, 
@@ -23,13 +23,7 @@ import {
 
 // Helper to check if Firebase is configured with real credentials (not placeholders)
 export function isFirebaseConfigured(): boolean {
-  try {
-    const configStr = localStorage.getItem('firebase-applet-config') || '';
-    if (configStr.includes('PlaceholderKey')) return false;
-    return true;
-  } catch {
-    return false;
-  }
+  return isConfigured;
 }
 
 // PROFILE SERVICE
@@ -37,13 +31,17 @@ export async function fetchProfile(): Promise<Profile> {
   const collectionName = 'profile';
   const docId = 'main';
   try {
+    const local = localStorage.getItem('profile_main');
+    if (!isConfigured) {
+      if (local) return JSON.parse(local);
+      return DEFAULT_PROFILE;
+    }
     const docRef = doc(db, collectionName, docId);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       return docSnap.data() as Profile;
     }
     // Check localStorage fallback
-    const local = localStorage.getItem('profile_main');
     if (local) return JSON.parse(local);
     return DEFAULT_PROFILE;
   } catch (error) {
@@ -62,12 +60,14 @@ export async function saveProfile(profile: Profile): Promise<void> {
     updatedAt: new Date().toISOString()
   };
   try {
+    localStorage.setItem('profile_main', JSON.stringify(data));
+    if (!isConfigured) {
+      return;
+    }
     const docRef = doc(db, collectionName, docId);
     // Write field-by-field or overwrite
     await setDoc(docRef, data);
-    localStorage.setItem('profile_main', JSON.stringify(data));
   } catch (error) {
-    localStorage.setItem('profile_main', JSON.stringify(data));
     handleFirestoreError(error, OperationType.WRITE, `${collectionName}/${docId}`);
   }
 }
@@ -76,6 +76,11 @@ export async function saveProfile(profile: Profile): Promise<void> {
 export async function fetchSkills(): Promise<Skill[]> {
   const collectionName = 'skills';
   try {
+    const local = localStorage.getItem('skills_list');
+    if (!isConfigured) {
+      if (local) return JSON.parse(local);
+      return DEFAULT_SKILLS;
+    }
     const q = query(collection(db, collectionName));
     const querySnapshot = await getDocs(q);
     const fetchedSkills: Skill[] = [];
@@ -88,7 +93,6 @@ export async function fetchSkills(): Promise<Skill[]> {
     }
     
     // Check localStorage
-    const local = localStorage.getItem('skills_list');
     if (local) return JSON.parse(local);
     return DEFAULT_SKILLS;
   } catch (error) {
@@ -106,6 +110,12 @@ export async function addSkill(skill: Omit<Skill, 'id'>): Promise<string> {
     createdAt: new Date().toISOString()
   };
   try {
+    if (!isConfigured) {
+      const tempId = `local_s_${Date.now()}`;
+      const skills = await fetchSkills();
+      localStorage.setItem('skills_list', JSON.stringify([...skills, { id: tempId, ...data }]));
+      return tempId;
+    }
     const docRef = await addDoc(collection(db, collectionName), data);
     
     // Sync to local for high-performance instant fallback
@@ -131,16 +141,17 @@ export async function updateSkill(id: string, skill: Omit<Skill, 'id'>): Promise
     createdAt: skill.createdAt || new Date().toISOString()
   };
   try {
+    const skills = await fetchSkills();
+    const updatedList = skills.map(s => s.id === id ? { id, ...data } : s);
+    localStorage.setItem('skills_list', JSON.stringify(updatedList));
+
+    if (!isConfigured) {
+      return;
+    }
+
     const docRef = doc(db, collectionName, id);
     await setDoc(docRef, data);
-    
-    const skills = await fetchSkills();
-    const updatedList = skills.map(s => s.id === id ? { id, ...data } : s);
-    localStorage.setItem('skills_list', JSON.stringify(updatedList));
   } catch (error) {
-    const skills = await fetchSkills();
-    const updatedList = skills.map(s => s.id === id ? { id, ...data } : s);
-    localStorage.setItem('skills_list', JSON.stringify(updatedList));
     handleFirestoreError(error, OperationType.UPDATE, `${collectionName}/${id}`);
   }
 }
@@ -148,14 +159,16 @@ export async function updateSkill(id: string, skill: Omit<Skill, 'id'>): Promise
 export async function deleteSkill(id: string): Promise<void> {
   const collectionName = 'skills';
   try {
+    const skills = await fetchSkills();
+    localStorage.setItem('skills_list', JSON.stringify(skills.filter(s => s.id !== id)));
+
+    if (!isConfigured) {
+      return;
+    }
+
     const docRef = doc(db, collectionName, id);
     await deleteDoc(docRef);
-    
-    const skills = await fetchSkills();
-    localStorage.setItem('skills_list', JSON.stringify(skills.filter(s => s.id !== id)));
   } catch (error) {
-    const skills = await fetchSkills();
-    localStorage.setItem('skills_list', JSON.stringify(skills.filter(s => s.id !== id)));
     handleFirestoreError(error, OperationType.DELETE, `${collectionName}/${id}`);
   }
 }
@@ -164,6 +177,11 @@ export async function deleteSkill(id: string): Promise<void> {
 export async function fetchProjects(): Promise<Project[]> {
   const collectionName = 'projects';
   try {
+    const local = localStorage.getItem('projects_list');
+    if (!isConfigured) {
+      if (local) return JSON.parse(local);
+      return DEFAULT_PROJECTS;
+    }
     const q = query(collection(db, collectionName));
     const querySnapshot = await getDocs(q);
     const fetchedProjects: Project[] = [];
@@ -175,7 +193,6 @@ export async function fetchProjects(): Promise<Project[]> {
       return fetchedProjects;
     }
     
-    const local = localStorage.getItem('projects_list');
     if (local) return JSON.parse(local);
     return DEFAULT_PROJECTS;
   } catch (error) {
@@ -193,6 +210,12 @@ export async function addProject(project: Omit<Project, 'id'>): Promise<string> 
     createdAt: new Date().toISOString()
   };
   try {
+    if (!isConfigured) {
+      const tempId = `local_p_${Date.now()}`;
+      const projects = await fetchProjects();
+      localStorage.setItem('projects_list', JSON.stringify([...projects, { id: tempId, ...data }]));
+      return tempId;
+    }
     const docRef = await addDoc(collection(db, collectionName), data);
     
     const projects = await fetchProjects();
@@ -214,16 +237,17 @@ export async function updateProject(id: string, project: Omit<Project, 'id'>): P
     createdAt: project.createdAt || new Date().toISOString()
   };
   try {
+    const projects = await fetchProjects();
+    const updatedList = projects.map(p => p.id === id ? { id, ...data } : p);
+    localStorage.setItem('projects_list', JSON.stringify(updatedList));
+
+    if (!isConfigured) {
+      return;
+    }
+
     const docRef = doc(db, collectionName, id);
     await setDoc(docRef, data);
-    
-    const projects = await fetchProjects();
-    const updatedList = projects.map(p => p.id === id ? { id, ...data } : p);
-    localStorage.setItem('projects_list', JSON.stringify(updatedList));
   } catch (error) {
-    const projects = await fetchProjects();
-    const updatedList = projects.map(p => p.id === id ? { id, ...data } : p);
-    localStorage.setItem('projects_list', JSON.stringify(updatedList));
     handleFirestoreError(error, OperationType.UPDATE, `${collectionName}/${id}`);
   }
 }
@@ -231,14 +255,16 @@ export async function updateProject(id: string, project: Omit<Project, 'id'>): P
 export async function deleteProject(id: string): Promise<void> {
   const collectionName = 'projects';
   try {
+    const projects = await fetchProjects();
+    localStorage.setItem('projects_list', JSON.stringify(projects.filter(p => p.id !== id)));
+
+    if (!isConfigured) {
+      return;
+    }
+
     const docRef = doc(db, collectionName, id);
     await deleteDoc(docRef);
-    
-    const projects = await fetchProjects();
-    localStorage.setItem('projects_list', JSON.stringify(projects.filter(p => p.id !== id)));
   } catch (error) {
-    const projects = await fetchProjects();
-    localStorage.setItem('projects_list', JSON.stringify(projects.filter(p => p.id !== id)));
     handleFirestoreError(error, OperationType.DELETE, `${collectionName}/${id}`);
   }
 }
@@ -248,12 +274,16 @@ export async function fetchContact(): Promise<Contact> {
   const collectionName = 'contacts';
   const docId = 'main';
   try {
+    const local = localStorage.getItem('contact_main');
+    if (!isConfigured) {
+      if (local) return JSON.parse(local);
+      return DEFAULT_CONTACT;
+    }
     const docRef = doc(db, collectionName, docId);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       return docSnap.data() as Contact;
     }
-    const local = localStorage.getItem('contact_main');
     if (local) return JSON.parse(local);
     return DEFAULT_CONTACT;
   } catch (error) {
@@ -272,11 +302,13 @@ export async function saveContact(contact: Contact): Promise<void> {
     updatedAt: new Date().toISOString()
   };
   try {
+    localStorage.setItem('contact_main', JSON.stringify(data));
+    if (!isConfigured) {
+      return;
+    }
     const docRef = doc(db, collectionName, docId);
     await setDoc(docRef, data);
-    localStorage.setItem('contact_main', JSON.stringify(data));
   } catch (error) {
-    localStorage.setItem('contact_main', JSON.stringify(data));
     handleFirestoreError(error, OperationType.WRITE, `${collectionName}/${docId}`);
   }
 }
@@ -284,6 +316,9 @@ export async function saveContact(contact: Contact): Promise<void> {
 // STORAGE UPLOAD (With Base64 dynamic fallback when offline or Firebase Storage is unprovisioned)
 export async function uploadImage(file: File, folder: string): Promise<string> {
   try {
+    if (!isConfigured) {
+      throw new Error("Firebase Storage is currently not configured");
+    }
     const fileRef = ref(storage, `${folder}/${Date.now()}_${file.name}`);
     const snapshot = await uploadBytes(fileRef, file);
     return await getDownloadURL(snapshot.ref);

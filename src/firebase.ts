@@ -1,14 +1,25 @@
+/// <reference types="vite/client" />
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import firebaseConfig from '../firebase-applet-config.json';
+const isConfigured = !!import.meta.env.VITE_FIREBASE_API_KEY;
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "dummy-api-key-for-build",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "dummy-auth-domain",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "dummy-project-id",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "dummy-storage-bucket",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "dummy-sender-id",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "dummy-app-id",
+};
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId); /* CRITICAL: The app will break without this line */
+export const db = getFirestore(app, import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || undefined); /* CRITICAL: The app will break without this line */
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
+export { isConfigured };
 
 // Pre-configured Google Auth provider parameters for polished UX
 googleProvider.setCustomParameters({
@@ -18,11 +29,24 @@ googleProvider.setCustomParameters({
 // Simple connection test as required by Firestore integration guidelines
 export async function testConnection() {
   try {
+    if (!isConfigured) {
+      console.log("Firebase is not fully configured yet. Running in secure offline/fallback mode.");
+      return;
+    }
     await getDocFromServer(doc(db, 'test', 'connection'));
     console.log("Firebase connection established successfully.");
   } catch (error: any) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Firebase connection error: The client is offline.");
+    const isOfflineMsg = error instanceof Error && (
+      error.message.toLowerCase().includes('offline') || 
+      error.message.toLowerCase().includes('unavailable')
+    );
+    if (isOfflineMsg) {
+      console.log("ℹ️ [Firebase Connection Status]: the client is offline or database is not yet initialized.");
+      console.log("👉 Troubleshooting steps for custom Firebase project 'mahfuz002-b0b26':");
+      console.log("1. Go to Firebase Console: https://console.firebase.google.com/project/mahfuz002-b0b26/firestore");
+      console.log("2. Click on 'Create Database' and select your preferred location/region (e.g. Standard/Enterprise mode).");
+      console.log("3. Select 'Test Mode' or 'Production Mode' (rules can be deployed from this project using deploy_firebase).");
+      console.log("Once created, standard data mutations will automatically start syncing with your remote database.");
     } else {
       console.log("First connection test complete (authenticated status checks evaluated).");
     }

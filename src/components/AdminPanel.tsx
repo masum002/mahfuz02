@@ -7,7 +7,8 @@ import {
 } from 'firebase/auth';
 import { 
   auth, 
-  googleProvider 
+  googleProvider,
+  isConfigured
 } from '../firebase';
 import { 
   fetchProfile, 
@@ -52,17 +53,6 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'skills' | 'projects' | 'contact'>('profile');
-  const [isIframe, setIsIframe] = useState(false);
-  const [passcode, setPasscode] = useState('');
-  const [isPasscodeSession, setIsPasscodeSession] = useState(false);
-
-  useEffect(() => {
-    try {
-      setIsIframe(window.self !== window.top);
-    } catch (e) {
-      setIsIframe(true);
-    }
-  }, []);
 
   // Unified status banner messages
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'danger' } | null>(null);
@@ -111,12 +101,6 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   // Auth Status Monitor
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      // If we are currently signed in with active passcode session, respect it
-      if (isPasscodeSession) {
-        setAuthLoading(false);
-        return;
-      }
-
       if (currentUser) {
         // Strict Email Lock Verification
         if (currentUser.email && ALLOWED_EMAILS.includes(currentUser.email)) {
@@ -137,7 +121,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     });
 
     return () => unsubscribe();
-  }, [isPasscodeSession]);
+  }, []);
 
   const handleGoogleLogin = async () => {
     setAuthLoading(true);
@@ -151,28 +135,8 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     }
   };
 
-  const handlePasscodeLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError(null);
-    const trimmed = passcode.trim();
-    if (trimmed === 'admin1234' || trimmed === 'admin2026' || trimmed === 'mahfujar003' || trimmed === 'somossa_nai') {
-      setIsPasscodeSession(true);
-      const simulatedUser = {
-        email: 'mahfujar003@gmail.com',
-        displayName: 'Administrator (Passcode Override)',
-        uid: 'passcode-admin'
-      } as any;
-      setUser(simulatedUser);
-      loadAllMetricsData();
-      showStatus("Backend override activated. Welcome back, Mahfuj!", "success");
-    } else {
-      setAuthError("ভুল পাসকোড! সঠিক পাসকোড দিয়ে পুনরায় চেষ্টা করুন। (সঠিক ডেমো পাসকোড: admin2026)");
-    }
-  };
-
   const handleLogout = async () => {
     try {
-      setIsPasscodeSession(false);
       await signOut(auth);
       setUser(null);
       showStatus("Logged out successfully.", "success");
@@ -437,6 +401,30 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
             <p className="text-slate-400 text-xs font-mono mt-2 uppercase tracking-widest text-slate-500">Secure Protocol Interface</p>
           </div>
 
+          {!isConfigured && (
+            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-3.5 text-xs text-slate-300">
+              <div className="flex items-center gap-2 text-amber-400 font-semibold font-sans">
+                <AlertTriangle size={15} className="shrink-0" />
+                <span>নতুন Firebase প্রোজেক্ট সেটআপ করুন (Secure Mode)</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-slate-400">
+                আপনার GitHub নিরাপত্তা নিশ্চিত করতে হার্ডকোডেড সিক্রেট ফাইল রিমুভ করা হয়েছে। এখন আপনার নতুন Firebase প্রজেক্ট সচল করার জন্য AI Studio-এর <strong>Settings</strong> বা <strong>Secrets</strong> মেনু থেকে নিচের এনভায়রনমেন্ট ভেরিয়েবলগুলো (Environment Variables) যোগ করুন:
+              </p>
+              <div className="space-y-1 bg-slate-950 p-3 rounded-xl border border-slate-800/80 font-mono text-[10px] text-purple-300">
+                <div>VITE_FIREBASE_API_KEY</div>
+                <div>VITE_FIREBASE_AUTH_DOMAIN</div>
+                <div>VITE_FIREBASE_PROJECT_ID</div>
+                <div>VITE_FIREBASE_STORAGE_BUCKET</div>
+                <div>VITE_FIREBASE_MESSAGING_SENDER_ID</div>
+                <div>VITE_FIREBASE_APP_ID</div>
+                <div>VITE_FIREBASE_FIRESTORE_DATABASE_ID (ঐচ্ছিক)</div>
+              </div>
+              <p className="text-[10px] text-slate-500 leading-normal italic">
+                * মনে রাখবেন, এই এনভায়রনমেন্ট ভ্যালুগুলো শুধুমাত্র আপনার ব্রাউজার ও হোস্টিং এনভায়রনমেন্টে থাকবে, কখনো GitHub রিপোজিটরিতে প্রকাশ বা পুশ হবে না।
+              </p>
+            </div>
+          )}
+
           {authError && (
             <div className="space-y-4">
               <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3 text-red-400 text-xs leading-relaxed">
@@ -476,6 +464,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                         <div className="my-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1 font-mono text-[10px] text-emerald-400 select-all">
                           <div>ais-dev-7ydkkoxbt24i4epdzpgpmu-376430413500.asia-southeast1.run.app</div>
                           <div>ais-pre-7ydkkoxbt24i4epdzpgpmu-376430413500.asia-southeast1.run.app</div>
+                          <div>mahfuz02.vercel.app</div>
                         </div>
                       </li>
                       <li>
@@ -488,42 +477,12 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                         English Instructions:
                       </p>
                       <p className="text-[10px] text-slate-400 mt-1">
-                        Go to your Firebase Console settings and add the two <strong>run.app</strong> domains listed above to your <strong>Authorized domains</strong>, then save and refresh this page to log in.
+                        Go to your Firebase Console settings and add the <strong>run.app</strong> and <strong>vercel.app</strong> domains listed above to your <strong>Authorized domains</strong>, then save and refresh this page to log in.
                       </p>
                     </div>
                   </div>
                 </div>
               )}
-            </div>
-          )}
-
-          {isIframe && (
-            <div className="p-4 bg-amber-500/15 border border-amber-500/30 rounded-2xl space-y-3 text-xs leading-relaxed text-slate-350">
-              <div className="flex items-center gap-2 text-amber-400 font-semibold font-sans">
-                <AlertTriangle size={16} className="shrink-0" />
-                <span>AI Studio Preview / Frame Detected</span>
-              </div>
-              <p className="text-slate-200 text-[11px] leading-relaxed">
-                আপনার ব্রাউজার সিকিউরিটি পলিসির ফ্রেম প্রিভিউয়ের কারণে গুগল সাইন-ইন পপআপ ব্লক হতে পারে। নিচের বাটনটি চাপলে কোনো সমস্যা ছাড়াই সরাসরি আলাদা ট্যাবে অ্যাপটি ওপেন হবে এবং সহজে লগইন করতে পারবেন।
-              </p>
-              <p className="text-slate-400 text-[11px] leading-relaxed">
-                Browser frames often block OAuth sign-in popups. Please use the button below to open the application in a new tab for seamless admin authentication.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  try {
-                    const url = new URL(window.location.origin);
-                    url.searchParams.set('view', 'admin');
-                    window.open(url.toString(), '_blank');
-                  } catch (e) {
-                    window.open(window.location.href, '_blank');
-                  }
-                }}
-                className="w-full py-2 px-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 hover:border-amber-500/50 text-amber-300 hover:text-amber-200 rounded-xl font-bold font-sans text-xs transition-all tracking-wide text-center uppercase cursor-pointer"
-              >
-                Open Admin in New Tab ↗
-              </button>
             </div>
           )}
 
@@ -533,44 +492,6 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
               <Check size={14} className="text-purple-500" />
               <span>Google Sign-In POPUP Integration</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <Check size={14} className="text-purple-500" />
-              <span>Override Passcode Enabled (Offline-First)</span>
-            </div>
-          </div>
-
-          <form onSubmit={handlePasscodeLogin} className="space-y-4">
-            <div>
-              <label htmlFor="admin_passcode" className="block text-[11px] font-mono text-slate-400 mb-2 uppercase tracking-wider">
-                System Passcode (পাসকোড দিন)
-              </label>
-              <input
-                id="admin_passcode"
-                type="password"
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                placeholder="সরাসরি লগইনের জন্য টাইপ করুন: admin2026"
-                className="w-full bg-slate-950 border border-slate-800 focus:border-purple-500 rounded-xl px-4 py-3.5 text-xs text-white placeholder-slate-600 focus:outline-none transition-all font-mono"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3.5 px-6 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700/60 rounded-xl text-slate-200 font-sans font-bold text-xs tracking-wider transition-all duration-300 shadow-md flex items-center justify-center gap-2 cursor-pointer uppercase"
-            >
-              <Sparkles size={14} className="text-purple-400 animate-pulse" />
-              Access System Console
-            </button>
-          </form>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center" aria-hidden="true">
-              <div className="w-full border-t border-slate-800" />
-            </div>
-            <div className="relative flex justify-center text-[10px] font-mono uppercase">
-              <span className="bg-slate-900 px-3 text-slate-500">OR</span>
-            </div>
           </div>
 
           <button
@@ -578,7 +499,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
             className="w-full py-4 px-6 bg-gradient-to-r from-purple-600/60 to-pink-600/60 hover:from-purple-500 hover:to-pink-500 text-white rounded-2xl font-medium tracking-wide transition-all duration-300 shadow-lg shadow-purple-600/10 hover:shadow-purple-500/20 font-sans flex items-center justify-center gap-3.5 opacity-80 hover:opacity-100"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.986 0-.74-.08-1.3-.177-1.86H12.24z"/>
+              <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.986 0-.74-.08-1.3-.177-1.86H12.24z"/>
             </svg>
             Google Identity Gateway
           </button>
