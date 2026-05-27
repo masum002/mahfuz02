@@ -23,6 +23,7 @@ export interface Profile {
   cvGender?: string;
   cvLanguages?: string;
   cvObjective?: string;
+  cvSignatureUrl?: string;
 }
 
 export interface Skill {

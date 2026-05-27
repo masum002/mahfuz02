@@ -95,7 +95,8 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     cvNationality: '',
     cvGender: '',
     cvLanguages: '',
-    cvObjective: ''
+    cvObjective: '',
+    cvSignatureUrl: ''
   });
   const [skillsList, setSkillsList] = useState<Skill[]>([]);
   const [projectsList, setProjectsList] = useState<Project[]>([]);
@@ -111,6 +112,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   // File loading states
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingCvPhoto, setIsUploadingCvPhoto] = useState(false);
+  const [isUploadingCvSignature, setIsUploadingCvSignature] = useState(false);
   const [isUploadingProjImg, setIsUploadingProjImg] = useState(false);
 
   // Whitelisted Emails defined inside specification & bootstrapped user runtime email
@@ -386,6 +388,21 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
       showStatus("CV Photograph upload failed.", "danger");
     } finally {
       setIsUploadingCvPhoto(false);
+    }
+  };
+
+  const handleCvSignatureFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingCvSignature(true);
+    try {
+      const url = await uploadImage(file, 'cvSignatures');
+      setProfileForm(prev => ({ ...prev, cvSignatureUrl: url }));
+      showStatus("CV Digital Signature uploaded successfully.", "success");
+    } catch (err) {
+      showStatus("CV Digital Signature upload failed.", "danger");
+    } finally {
+      setIsUploadingCvSignature(false);
     }
   };
 
@@ -1020,7 +1037,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {/* CV Name */}
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">CV Name / Header</label>
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">CV Name / Header</label>
                       <input
                         type="text"
                         value={profileForm.cvName || ''}
@@ -1030,9 +1047,9 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                       />
                     </div>
 
-                    {/* CV Title */}
+                    {/* CV Professional Title */}
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">CV Professional Title</label>
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">CV Professional Title</label>
                       <input
                         type="text"
                         value={profileForm.cvTitle || ''}
@@ -1044,7 +1061,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
                     {/* CV Address */}
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">CV Contact Address</label>
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">CV Contact Address</label>
                       <input
                         type="text"
                         value={profileForm.cvAddress || ''}
@@ -1056,7 +1073,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
                     {/* CV Email */}
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">CV Email Address</label>
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">CV Email Address</label>
                       <input
                         type="email"
                         value={profileForm.cvEmail || ''}
@@ -1068,7 +1085,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
                     {/* CV Phone */}
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">CV Contact Phone</label>
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">CV Contact Phone</label>
                       <input
                         type="text"
                         value={profileForm.cvPhone || ''}
@@ -1080,7 +1097,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
                     {/* CV Photo URL */}
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">CV Image / Photograph URL</label>
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">CV Image / Photograph URL</label>
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -1102,6 +1119,33 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                       </div>
                       {isUploadingCvPhoto && (
                         <p className="text-[9px] font-mono text-purple-400 animate-pulse">Uploading photograph to Cloud Storage...</p>
+                      )}
+                    </div>
+
+                    {/* CV Signature URL */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-300 block">CV Digital Signature (স্বাক্ষর ইমেজ / URL)</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={profileForm.cvSignatureUrl || ''}
+                          onChange={(e) => setProfileForm(prev => ({ ...prev, cvSignatureUrl: e.target.value }))}
+                          className="flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                          placeholder="Or upload signature image →"
+                        />
+                        <label className="px-3 py-2 bg-slate-950 border border-slate-800 text-slate-300 hover:text-white rounded-xl hover:bg-slate-800 cursor-pointer flex items-center justify-center text-xs transition-colors relative">
+                          <Upload size={13} />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleCvSignatureFileSelect}
+                            className="hidden"
+                            disabled={isUploadingCvSignature}
+                          />
+                        </label>
+                      </div>
+                      {isUploadingCvSignature && (
+                        <p className="text-[9px] font-mono text-purple-400 animate-pulse">Uploading signature to Cloud Storage...</p>
                       )}
                     </div>
 

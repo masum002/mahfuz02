@@ -61,6 +61,43 @@ export default function Hero({
     return () => clearTimeout(timer);
   }, [charIndex, isDeleting, titleIndex, profile.heroRoles, titles]);
 
+  const getBase64ImageFromUrl = async (imgUrl: string): Promise<string | null> => {
+    try {
+      if (!imgUrl) return null;
+      if (imgUrl.startsWith('data:')) return imgUrl;
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.setAttribute('crossOrigin', 'anonymous');
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0);
+              const dataURL = canvas.toDataURL('image/jpeg', 0.95);
+              resolve(dataURL);
+            } else {
+              resolve(null);
+            }
+          } catch (e) {
+            console.error("Canvas conversion failed:", e);
+            resolve(null);
+          }
+        };
+        img.onerror = () => {
+          console.error("Image loading failed:", imgUrl);
+          resolve(null);
+        };
+        img.src = imgUrl;
+      });
+    } catch (err) {
+      console.error("Base64 loader failed:", err);
+      return null;
+    }
+  };
+
   const handleDownloadCV = async () => {
     setPdfCompiling(true);
     
@@ -78,6 +115,10 @@ export default function Hero({
       const textSecondary = [71, 85, 105]; // Slate 600
       const borderSlate = [226, 232, 240]; // Slate 200
 
+      // Pre-fetch both CV photograph and signature image safely
+      const photoBase64 = cvPhotoUrlStr ? await getBase64ImageFromUrl(cvPhotoUrlStr) : null;
+      const signatureBase64 = cvSignatureUrlStr ? await getBase64ImageFromUrl(cvSignatureUrlStr) : null;
+
       // 3. Side accent panel
       doc.setFillColor(248, 250, 252); // elegant light off-white (slate-50)
       doc.rect(10, 10, 62, 277, 'F');
@@ -86,32 +127,63 @@ export default function Hero({
       doc.setFillColor(124, 58, 237);
       doc.rect(10, 10, 3, 277, 'F');
 
-      // 4. HEADER - Main right-side top quadrant
+      // 4. PHOTOGRAPH OR PORTRAIT AVATAR drawing
+      let sideY = 17.5;
+      if (photoBase64) {
+        // Draw elegant picture border
+        doc.setFillColor(255, 255, 255);
+        doc.rect(18.5, 15, 45, 45, 'F'); // border card
+        doc.setDrawColor(124, 58, 237); // Purple accent border
+        doc.setLineWidth(0.6);
+        doc.rect(18.5, 15, 45, 45, 'D');
+        
+        doc.addImage(photoBase64, 'JPEG', 19.5, 16, 43, 43);
+        sideY = 67;
+      } else {
+        // Stylish placeholder avatar matching premium UI
+        doc.setFillColor(237, 233, 254); // background light purple (violet-100)
+        doc.rect(18.5, 15, 45, 45, 'F');
+        doc.setDrawColor(124, 58, 237);
+        doc.setLineWidth(0.6);
+        doc.rect(18.5, 15, 45, 45, 'D');
+        
+        doc.setFillColor(124, 58, 237);
+        doc.circle(41, 31, 6, 'F'); // head
+        doc.ellipse(41, 48, 14, 8, 'F'); // shoulders
+        
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(124, 58, 237);
+        doc.text("PHOTO", 41, 40, { align: 'center' });
+        sideY = 67;
+      }
+
+      // 5. HEADER - Main right-side top quadrant
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(24);
+      doc.setFontSize(23);
       doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2]);
-      doc.text(cvNameStr.toUpperCase(), 78, 26);
+      doc.text(cvNameStr.toUpperCase(), 78, 25);
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.text(cvTitleStr, 78, 32);
+      doc.text(cvTitleStr, 78, 31);
 
       // Section separator line
       doc.setDrawColor(borderSlate[0], borderSlate[1], borderSlate[2]);
       doc.setLineWidth(0.5);
-      doc.line(78, 36, 200, 36);
+      doc.line(78, 35, 200, 35);
 
-      // 5. LEFT SIDEBAR DETAILS
+      // 6. LEFT SIDEBAR DETAILS
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(10.5);
+      doc.setFontSize(10);
       doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2]);
-      doc.text("PERSONAL DETAILS", 18, 26);
+      doc.text("PERSONAL DETAILS", 18, sideY);
       doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.setLineWidth(0.6);
-      doc.line(18, 28.5, 38, 28.5);
+      doc.line(18, sideY + 2.5, 40, sideY + 2.5);
 
-      let sideY = 36;
+      sideY += 9;
       const drawSideHeader = (label: string) => {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
@@ -122,7 +194,7 @@ export default function Hero({
 
       const drawSideText = (text: string, width: number = 48) => {
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
+        doc.setFontSize(8.5);
         doc.setTextColor(51, 65, 85);
         const lines = doc.splitTextToSize(text, width);
         doc.text(lines, 18, sideY);
@@ -137,8 +209,8 @@ export default function Hero({
       if (profile.cvGender) { drawSideHeader("Gender"); drawSideText(profile.cvGender); }
       if (profile.cvLanguages) { drawSideHeader("Languages"); drawSideText(profile.cvLanguages); }
 
-      // Skills List
-      if (sideY < 270) {
+      // Skills List in Sidebar
+      if (sideY < 265) {
         drawSideHeader("Skills / Expertise");
         const skills = cvSkillsList;
         doc.setFont("helvetica", "normal");
@@ -154,12 +226,12 @@ export default function Hero({
         });
       }
 
-      // 6. RIGHT COLUMN MAIN SECTIONS
-      let mainY = 46;
+      // 7. RIGHT COLUMN MAIN SECTIONS
+      let mainY = 44;
 
       const drawSectionHeader = (title: string) => {
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(11);
+        doc.setFontSize(10.5);
         doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2]);
         doc.text(title.toUpperCase(), 78, mainY);
         doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -169,7 +241,7 @@ export default function Hero({
       };
 
       // OBJECTIVE
-      const objectiveText = profile.cvObjective || profile.bio || "Professional Full Stack developer looking to deliver great UI/UX...";
+      const objectiveText = profile.cvObjective || profile.bio || "Professional Full Stack developer looking to deliver state-of-the-art responsive web services...";
       drawSectionHeader("Professional Objective");
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9.5);
@@ -178,26 +250,139 @@ export default function Hero({
       doc.text(splitObjective, 78, mainY);
       mainY += (splitObjective.length * 4.5) + 8;
 
-      // EXPERIENCE
+      // EXPERIENCE (Career Timeline Parser)
       drawSectionHeader("Professional History");
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(51, 65, 85);
-      const splitExperience = doc.splitTextToSize(cvExperienceStr, 118);
-      doc.text(splitExperience, 78, mainY);
-      mainY += (splitExperience.length * 4.5) + 8;
+      const jobRoles = cvExperienceStr.split('\n\n').map(job => job.trim()).filter(Boolean);
+      jobRoles.forEach((job) => {
+        if (mainY > 245) {
+          doc.addPage();
+          mainY = 24;
+        }
 
-      // EDUCATION
-      if (mainY > 240) {
+        const lines = job.split('\n').map(l => l.trim()).filter(Boolean);
+        if (lines.length === 0) return;
+
+        const headerLine = lines[0];
+        
+        // Draw timeline node elements
+        doc.setDrawColor(124, 58, 237);
+        doc.setLineWidth(0.4);
+        doc.line(81, mainY - 1, 81, mainY + 11);
+        doc.setFillColor(124, 58, 237);
+        doc.circle(81, mainY - 1, 1.2, 'F');
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2]);
+        doc.text(headerLine, 85, mainY);
+        mainY += 4.5;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.5);
+        doc.setTextColor(textSecondary[0], textSecondary[1], textSecondary[2]);
+
+        for (let i = 1; i < lines.length; i++) {
+          if (mainY > 265) {
+            doc.addPage();
+            mainY = 24;
+          }
+          const point = lines[i];
+          doc.setFillColor(124, 58, 237);
+          doc.circle(86, mainY - 0.9, 0.4, 'F');
+          
+          const splitPoint = doc.splitTextToSize(point.replace(/^-\s*/, ''), 105);
+          doc.text(splitPoint, 89, mainY);
+          mainY += (splitPoint.length * 4) + 1;
+        }
+        mainY += 4;
+      });
+
+      // EDUCATION BACKGROUND WITH QUANTIFIED CGPA/RESULTS
+      mainY += 3;
+      if (mainY > 245) {
         doc.addPage();
-        mainY = 20; // reset on page 2 if needed
+        mainY = 24;
       }
       drawSectionHeader("Education Background");
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(51, 65, 85);
-      const splitEducation = doc.splitTextToSize(cvEducationStr, 118);
-      doc.text(splitEducation, 78, mainY);
+      const educationLines = cvEducationStr.split('\n').map(l => l.trim()).filter(Boolean);
+      educationLines.forEach((item) => {
+        if (mainY > 245) {
+          doc.addPage();
+          mainY = 24;
+        }
+
+        let degree = item;
+        let institute = "";
+        let year = "";
+        let result = "";
+
+        // Parse structured layouts such as "Degree | School | Year | Result"
+        const parts = item.split(/[|\-–]/).map(p => p.trim());
+        if (parts.length >= 2) {
+          degree = parts[0];
+          institute = parts[1];
+          if (parts.length >= 3) {
+            year = parts[2];
+          }
+          if (parts.length >= 4) {
+            result = parts[3];
+          }
+        } else {
+          const commaParts = item.split(',').map(p => p.trim());
+          if (commaParts.length >= 2) {
+            degree = commaParts[0];
+            institute = commaParts[1];
+            if (commaParts.length >= 3) {
+              year = commaParts[2];
+            }
+          }
+        }
+
+        // Draw structural education point node
+        doc.setFillColor(124, 58, 237);
+        doc.circle(81, mainY - 1, 1, 'F');
+        
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2]);
+        doc.text(degree, 85, mainY);
+        mainY += 4.5;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.5);
+        doc.setTextColor(textSecondary[0], textSecondary[1], textSecondary[2]);
+        
+        let subtitle = institute;
+        if (year) subtitle += ` | ${year}`;
+        if (result) subtitle += ` | ${result}`;
+        
+        const splitSubtitle = doc.splitTextToSize(subtitle, 110);
+        doc.text(splitSubtitle, 85, mainY);
+        mainY += (splitSubtitle.length * 4) + 4.5;
+      });
+
+      // 8. SIGNATURE STAMP at bottom of the last page
+      if (signatureBase64) {
+        const totalPages = (doc as any).internal.getNumberOfPages();
+        doc.setPage(totalPages);
+        
+        const lastPageY = 255;
+        doc.setDrawColor(borderSlate[0], borderSlate[1], borderSlate[2]);
+        doc.setLineWidth(0.4);
+        doc.line(140, lastPageY, 195, lastPageY);
+        
+        doc.addImage(signatureBase64, 'PNG', 145, lastPageY - 11, 45, 10);
+        
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2]);
+        doc.text("Authorized Signature", 140, lastPageY + 4);
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(textSecondary[0], textSecondary[1], textSecondary[2]);
+        doc.text(cvNameStr.toUpperCase(), 140, lastPageY + 8);
+      }
 
       // Save PDF document
       const docName = `${cvNameStr.trim().replace(/\s+/g, '_')}_Resume_CV.pdf`;
@@ -217,9 +402,10 @@ export default function Hero({
   const cvEmailStr = profile.cvEmail || contact?.email || "mahfujar003@gmail.com";
   const cvPhoneStr = profile.cvPhone || contact?.phone || "+880 1700 000000";
   const cvPhotoUrlStr = profile.cvPhotoUrl || profile.avatarUrl || "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=600";
+  const cvSignatureUrlStr = profile.cvSignatureUrl || "";
   const cvSkillsList = (profile.cvSkills || "TypeScript, React, Next.js, Node.js, Express, Go, Docker, Kubernetes, GCP, Firebase, Tailwind CSS, Framer Motion").split(',').map(s => s.trim()).filter(Boolean);
   const cvExperienceStr = profile.cvExperience || "Senior Web Developer at Aura Soft Inc (2024 - Present)\n- Developed scalable micro-services and state engines.\n- Managed Kubernetes orchestration frameworks.\n\nSoftware Developer Intern at Chronos (2023 - 2024)\n- Crafted highly-responsive interactive calendars and widgets.";
-  const cvEducationStr = profile.cvEducation || "Bachelor of Science in Computer Science & Engineering - Prime University\nDiploma in Computer Technology - Sylhet Polytechnic Institute";
+  const cvEducationStr = profile.cvEducation || "B.Sc. in Computer Science & Engineering | Prime University | 2022 - 2026 | CGPA: 3.82\nDiploma in Computer Technology | Sylhet Polytechnic Institute | 2018 - 2021 | GPA: 3.92";
 
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center pt-24 overflow-hidden bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))]">
