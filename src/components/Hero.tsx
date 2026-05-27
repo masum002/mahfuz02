@@ -64,111 +64,148 @@ export default function Hero({
   const handleDownloadCV = async () => {
     setPdfCompiling(true);
     
-    // Select the hidden CV DOM layout
-    const element = document.getElementById('cv-pdf-root');
-    if (!element) {
-      setPdfCompiling(false);
-      alert("System issue: PDF output node not mounted.");
-      return;
-    }
-    
-    // Make CV element temporarily renderable in the document flow (offscreen)
-    element.style.display = 'block';
-    element.style.position = 'absolute';
-    element.style.left = '-9999px';
-    element.style.top = '-9999px';
-    element.style.width = '794px'; // A4 width at 96 DPI is 794px
-
-    let restoreStyles: (() => void) | null = null;
     try {
-      // Find and rewrite css rules containing "oklch(" temporarily
-      const restoredRules: { sheet: CSSStyleSheet; ruleText: string; index: number }[] = [];
-      const sheets = Array.from(document.styleSheets);
-      
-      for (const sheet of sheets) {
-        try {
-          const rules = sheet.cssRules || sheet.rules;
-          if (!rules) continue;
-          
-          const rulesArray = Array.from(rules);
-          for (let i = rulesArray.length - 1; i >= 0; i--) {
-            const rule = rulesArray[i];
-            if (rule.cssText && rule.cssText.includes('oklch(')) {
-              restoredRules.push({
-                sheet,
-                ruleText: rule.cssText,
-                index: i
-              });
-              
-              // Safely swap oklch colors with compatible rgb format to satisfy html2canvas parser
-              const cleanRuleText = rule.cssText.replace(/oklch\([^)]+\)/g, 'rgb(124, 58, 237)');
-              sheet.deleteRule(i);
-              sheet.insertRule(cleanRuleText, i);
-            }
-          }
-        } catch (e) {
-          // Cross-origin CSS rules might throw access error inside iframe, ignore safely
-        }
-      }
-      
-      restoreStyles = () => {
-        for (const item of restoredRules.reverse()) {
-          try {
-            item.sheet.deleteRule(item.index);
-            item.sheet.insertRule(item.ruleText, item.index);
-          } catch (e) {
-            console.warn("Could not restore original style config: ", e);
-          }
-        }
-      };
-    } catch (e) {
-      console.error("Style prep failed: ", e);
-    }
-    
-    try {
-      // Small timeout to allow images & styling to resolve fully
-      await new Promise(resolve => setTimeout(resolve, 350));
-      
-      const canvas = await html2canvas(element, {
-        scale: 2, // High DPI resolution output
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      });
-      
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF({
+      // 1. Initialize jsPDF
+      const doc = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       });
+
+      // 2. Setup colors
+      const primaryColor = [124, 58, 237]; // Elegant Purple (7c3aed)
+      const textPrimary = [15, 23, 42]; // Slate 900
+      const textSecondary = [71, 85, 105]; // Slate 600
+      const borderSlate = [226, 232, 240]; // Slate 200
+
+      // 3. Side accent panel
+      doc.setFillColor(248, 250, 252); // elegant light off-white (slate-50)
+      doc.rect(10, 10, 62, 277, 'F');
       
-      const width = pdf.internal.pageSize.getWidth();
-      const height = pdf.internal.pageSize.getHeight();
-      const imgWidth = 210; // A4 Millimeter width
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      // Add PDF image
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
-      
-      // Save CV
-      const filename = `${(profile.cvName || profile.name || "MAHFUZ_R_MASUM").replace(/\s+/g, '_')}_CV.pdf`;
-      pdf.save(filename);
+      // Sidebar top colored identifier line
+      doc.setFillColor(124, 58, 237);
+      doc.rect(10, 10, 3, 277, 'F');
+
+      // 4. HEADER - Main right-side top quadrant
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(24);
+      doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2]);
+      doc.text(cvNameStr.toUpperCase(), 78, 26);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.text(cvTitleStr, 78, 32);
+
+      // Section separator line
+      doc.setDrawColor(borderSlate[0], borderSlate[1], borderSlate[2]);
+      doc.setLineWidth(0.5);
+      doc.line(78, 36, 200, 36);
+
+      // 5. LEFT SIDEBAR DETAILS
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2]);
+      doc.text("PERSONAL DETAILS", 18, 26);
+      doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setLineWidth(0.6);
+      doc.line(18, 28.5, 38, 28.5);
+
+      let sideY = 36;
+      const drawSideHeader = (label: string) => {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        doc.text(label.toUpperCase(), 18, sideY);
+        sideY += 4;
+      };
+
+      const drawSideText = (text: string, width: number = 48) => {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(51, 65, 85);
+        const lines = doc.splitTextToSize(text, width);
+        doc.text(lines, 18, sideY);
+        sideY += (lines.length * 4) + 3;
+      };
+
+      if (cvEmailStr) { drawSideHeader("Email Address"); drawSideText(cvEmailStr); }
+      if (cvPhoneStr) { drawSideHeader("Phone Number"); drawSideText(cvPhoneStr); }
+      if (cvAddressStr) { drawSideHeader("Location"); drawSideText(cvAddressStr); }
+      if (profile.cvDob) { drawSideHeader("Date of Birth"); drawSideText(profile.cvDob); }
+      if (profile.cvNationality) { drawSideHeader("Nationality"); drawSideText(profile.cvNationality); }
+      if (profile.cvGender) { drawSideHeader("Gender"); drawSideText(profile.cvGender); }
+      if (profile.cvLanguages) { drawSideHeader("Languages"); drawSideText(profile.cvLanguages); }
+
+      // Skills List
+      if (sideY < 270) {
+        drawSideHeader("Skills / Expertise");
+        const skills = cvSkillsList;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(51, 65, 85);
+        skills.forEach(skill => {
+          if (sideY < 278) {
+            doc.setFillColor(124, 58, 237);
+            doc.circle(20, sideY - 1, 0.6, 'F');
+            doc.text(skill, 23, sideY);
+            sideY += 4.5;
+          }
+        });
+      }
+
+      // 6. RIGHT COLUMN MAIN SECTIONS
+      let mainY = 46;
+
+      const drawSectionHeader = (title: string) => {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.setTextColor(textPrimary[0], textPrimary[1], textPrimary[2]);
+        doc.text(title.toUpperCase(), 78, mainY);
+        doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.setLineWidth(0.8);
+        doc.line(78, mainY + 2.5, 98, mainY + 2.5);
+        mainY += 8;
+      };
+
+      // OBJECTIVE
+      const objectiveText = profile.cvObjective || profile.bio || "Professional Full Stack developer looking to deliver great UI/UX...";
+      drawSectionHeader("Professional Objective");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(51, 65, 85);
+      const splitObjective = doc.splitTextToSize(objectiveText, 118);
+      doc.text(splitObjective, 78, mainY);
+      mainY += (splitObjective.length * 4.5) + 8;
+
+      // EXPERIENCE
+      drawSectionHeader("Professional History");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(51, 65, 85);
+      const splitExperience = doc.splitTextToSize(cvExperienceStr, 118);
+      doc.text(splitExperience, 78, mainY);
+      mainY += (splitExperience.length * 4.5) + 8;
+
+      // EDUCATION
+      if (mainY > 240) {
+        doc.addPage();
+        mainY = 20; // reset on page 2 if needed
+      }
+      drawSectionHeader("Education Background");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(51, 65, 85);
+      const splitEducation = doc.splitTextToSize(cvEducationStr, 118);
+      doc.text(splitEducation, 78, mainY);
+
+      // Save PDF document
+      const docName = `${cvNameStr.trim().replace(/\s+/g, '_')}_Resume_CV.pdf`;
+      doc.save(docName);
     } catch (err) {
-      console.error("Failed to build PDF resume: ", err);
-      alert("Notice: Could not generate document utilizing system graphics. Custom PDF data downloaded securely.");
-      // Soft fallback to standard custom URL if configured
-      if (profile.cvUrl && profile.cvUrl !== "#") {
-        window.open(profile.cvUrl, '_blank');
-      }
+      console.error("Vector PDF Generation failed, fallback to raw window print: ", err);
+      window.print();
     } finally {
-      // Restore dynamic styles if modified
-      if (restoreStyles) {
-        restoreStyles();
-      }
-      // Restore hidden configuration
-      element.style.display = 'none';
       setPdfCompiling(false);
     }
   };
@@ -267,12 +304,12 @@ export default function Hero({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.6 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+          className="flex justify-center items-center"
         >
           <button
             onClick={handleDownloadCV}
             disabled={pdfCompiling}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl font-medium shadow-lg shadow-purple-600/20 hover:shadow-purple-500/30 transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-80 pb-3"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-10 py-4 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-500 hover:via-pink-500 hover:to-blue-500 text-white rounded-xl font-semibold shadow-xl shadow-purple-600/20 hover:shadow-purple-500/40 transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-80 pb-3"
           >
             {pdfCompiling ? (
               <>
@@ -286,34 +323,45 @@ export default function Hero({
               </>
             )}
           </button>
-          <button
-            onClick={onNavigateToContact}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl font-medium border border-slate-700 transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer"
-          >
-            Get In Touch
-          </button>
         </motion.div>
 
-        {/* Explore System Dynamic Matrix Loading trigger */}
-        <div className="relative mt-16 pb-12">
+        {/* Explore More Modern / High-End Interactive Section */}
+        <div className="relative mt-20 pb-12 flex flex-col items-center">
           {!exploreComplete ? (
             <motion.div
-              animate={{ y: [0, 6, 0] }}
-              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-              className={`mx-auto max-w-xs text-slate-500 hover:text-slate-350 cursor-pointer flex flex-col items-center gap-1.5 p-3 rounded-2xl border border-transparent transition-all duration-300 ${
-                isExploring ? 'bg-slate-900/40 border-slate-850 shadow-lg' : 'hover:bg-slate-900/20'
-              }`}
+              initial={{ scale: 0.95, opacity: 0.8 }}
+              whileHover={{ scale: 1.05, opacity: 1 }}
+              animate={{ y: [0, 8, 0] }}
+              transition={{ 
+                y: { repeat: Infinity, duration: 2.2, ease: "easeInOut" },
+                scale: { duration: 0.2 },
+                opacity: { duration: 0.2 }
+              }}
+              className="relative cursor-pointer group flex flex-col items-center justify-center"
               onClick={onExploreSystem}
             >
-              <span className="text-xs font-mono tracking-widest text-slate-550 uppercase">Explore System</span>
-              {isExploring ? (
-                <RefreshCw size={16} className="text-purple-400 animate-spin" />
-              ) : (
-                <ChevronDown size={18} className="text-purple-500" />
-              )}
+              {/* Pulsing glow ring */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-blue-500/20 rounded-full blur-xl group-hover:blur-2xl transition-all duration-300 animate-pulse" />
+              
+              <div className="relative px-8 py-3.5 bg-slate-900/90 border border-purple-500/30 rounded-full flex items-center gap-3 backdrop-blur-md shadow-2xl transition-all duration-300 group-hover:border-purple-400 group-hover:shadow-purple-500/10">
+                <span className="text-xs font-mono tracking-[0.2em] text-transparent bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text font-bold uppercase">
+                  Explore More
+                </span>
+                
+                {isExploring ? (
+                  <RefreshCw size={14} className="text-purple-400 animate-spin" />
+                ) : (
+                  <motion.div
+                    animate={{ y: [-2, 2, -2] }}
+                    transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                  >
+                    <ChevronDown size={14} className="text-purple-400" />
+                  </motion.div>
+                )}
+              </div>
             </motion.div>
           ) : (
-            <div className="text-xs font-mono text-purple-400 flex items-center justify-center gap-2 animate-pulse">
+            <div className="px-6 py-2 rounded-full bg-purple-500/5 border border-purple-500/20 text-xs font-mono text-purple-400 flex items-center justify-center gap-2 shadow-sm animate-pulse tracking-wide">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
               SYSTEM PORTFOLIO LOADED
             </div>

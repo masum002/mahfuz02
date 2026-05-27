@@ -9,11 +9,12 @@ service cloud.firestore {
 
     // Helper Functions
     function isSignedIn() {
-      return true;
+      return request.auth != null;
     }
 
     function isAdmin() {
-      return true;
+      return isSignedIn() &&
+             (request.auth.token.email == 'mahfujar003@gmail.com' || request.auth.token.email == 'your-actual-gmail@gmail.com');
     }
 
     function isValidId(id) {
@@ -23,45 +24,59 @@ service cloud.firestore {
     // Entity Validations
     function isValidProfile(data) {
       return data.keys().hasAll(['name', 'title', 'bio', 'cvUrl', 'avatarUrl', 'updatedAt']) &&
-             data.keys().size() == 6 &&
-             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
-             data.title is string && data.title.size() > 0 && data.title.size() <= 100 &&
-             data.bio is string && data.bio.size() > 0 && data.bio.size() <= 2000 &&
+             data.name is string && data.name.size() <= 100 &&
+             data.title is string && data.title.size() <= 100 &&
+             data.bio is string && data.bio.size() <= 3000 &&
              data.cvUrl is string && data.cvUrl.size() <= 1000 &&
              data.avatarUrl is string && data.avatarUrl.size() <= 1000 &&
-             data.updatedAt == request.time;
+             data.updatedAt is string &&
+             (!('heroGreeting' in data) || data.heroGreeting is string) &&
+             (!('heroSubtitle' in data) || data.heroSubtitle is string) &&
+             (!('heroRoles' in data) || data.heroRoles is string) &&
+             (!('cvName' in data) || data.cvName is string) &&
+             (!('cvAddress' in data) || data.cvAddress is string) &&
+             (!('cvPhotoUrl' in data) || data.cvPhotoUrl is string) &&
+             (!('cvEmail' in data) || data.cvEmail is string) &&
+             (!('cvPhone' in data) || data.cvPhone is string) &&
+             (!('cvTitle' in data) || data.cvTitle is string) &&
+             (!('cvEducation' in data) || data.cvEducation is string) &&
+             (!('cvExperience' in data) || data.cvExperience is string) &&
+             (!('cvSkills' in data) || data.cvSkills is string);
     }
 
+    // Skills Validation
     function isValidSkill(data) {
       return data.keys().hasAll(['name', 'category', 'percentage', 'createdAt']) &&
              data.keys().size() == 4 &&
-             data.name is string && data.name.size() > 0 && data.name.size() <= 50 &&
-             data.category is string && data.category.size() > 0 && data.category.size() <= 50 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.category is string && data.category.size() > 0 && data.category.size() <= 100 &&
              data.percentage is int && data.percentage >= 0 && data.percentage <= 100 &&
-             data.createdAt == request.time;
+             data.createdAt is string;
     }
 
+    // Projects Validation
     function isValidProject(data) {
       return data.keys().hasAll(['title', 'description', 'imageUrl', 'liveUrl', 'githubUrl', 'createdAt']) &&
              data.keys().size() == 6 &&
-             data.title is string && data.title.size() > 0 && data.title.size() <= 150 &&
-             data.description is string && data.description.size() > 0 && data.description.size() <= 1000 &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.description is string && data.description.size() <= 4000 &&
              data.imageUrl is string && data.imageUrl.size() <= 1000 &&
              data.liveUrl is string && data.liveUrl.size() <= 1000 &&
              data.githubUrl is string && data.githubUrl.size() <= 1000 &&
-             data.createdAt == request.time;
+             data.createdAt is string;
     }
 
+    // Contact Settings Validation
     function isValidContact(data) {
       return data.keys().hasAll(['email', 'phone', 'address', 'github', 'linkedin', 'twitter', 'updatedAt']) &&
              data.keys().size() == 7 &&
-             data.email is string && data.email.size() > 0 && data.email.size() <= 100 &&
-             data.phone is string && data.phone.size() <= 50 &&
-             data.address is string && data.address.size() <= 200 &&
+             data.email is string && data.email.size() <= 200 &&
+             data.phone is string && data.phone.size() <= 100 &&
+             data.address is string && data.address.size() <= 500 &&
              data.github is string && data.github.size() <= 1000 &&
              data.linkedin is string && data.linkedin.size() <= 1000 &&
              data.twitter is string && data.twitter.size() <= 1000 &&
-             data.updatedAt == request.time;
+             data.updatedAt is string;
     }
 
     // Collection Security Rules

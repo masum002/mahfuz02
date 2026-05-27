@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  signInWithPopup, 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updatePassword,
   signOut, 
   onAuthStateChanged, 
   User as FirebaseUser 
 } from 'firebase/auth';
 import { 
   auth, 
-  googleProvider,
   isConfigured
 } from '../firebase';
 import { 
@@ -41,7 +42,8 @@ import {
   Upload, 
   ExternalLink,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  ShieldAlert
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -52,7 +54,17 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'skills' | 'projects' | 'contact'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'skills' | 'projects' | 'contact' | 'security'>('profile');
+
+  // Custom secure login state variables
+  const [emailInput, setEmailInput] = useState('mahfujar003@gmail.com');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [registerMode, setRegisterMode] = useState(false);
+
+  // Security: password update states
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [isUpdatingPass, setIsUpdatingPass] = useState(false);
 
   // Unified status banner messages
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'danger' } | null>(null);
@@ -77,7 +89,12 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     cvTitle: '',
     cvEducation: '',
     cvExperience: '',
-    cvSkills: ''
+    cvSkills: '',
+    cvDob: '',
+    cvNationality: '',
+    cvGender: '',
+    cvLanguages: '',
+    cvObjective: ''
   });
   const [skillsList, setSkillsList] = useState<Skill[]>([]);
   const [projectsList, setProjectsList] = useState<Project[]>([]);
@@ -123,14 +140,45 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     return () => unsubscribe();
   }, []);
 
-  const handleGoogleLogin = async () => {
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailInput || !passwordInput) {
+      setAuthError("ইমেইল এবং পাসওয়ার্ড দুটিই দিন।");
+      return;
+    }
+
+    const cleanEmail = emailInput.trim().toLowerCase();
+    const cleanWhitelisted = ALLOWED_EMAILS.map(email => email.trim().toLowerCase());
+
+    if (!cleanWhitelisted.includes(cleanEmail)) {
+      setAuthError(`অ্যাক্সেস রিফিউজড: "${cleanEmail}" অ্যাডমিন ইমেইল হিসেবে অনুমোদিত নয়। শুধুমাত্র অনুমোদিত ইমেইল দিয়ে সাইন-ইন বা নতুন অ্যাকাউন্ট তৈরি করতে পারেন।`);
+      return;
+    }
+
     setAuthLoading(true);
     setAuthError(null);
+
     try {
-      await signInWithPopup(auth, googleProvider);
+      if (registerMode) {
+        await createUserWithEmailAndPassword(auth, cleanEmail, passwordInput);
+        showStatus("অ্যাডমিন অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে এবং আপনি সাইন-ইন করেছেন!", "success");
+      } else {
+        await signInWithEmailAndPassword(auth, cleanEmail, passwordInput);
+        showStatus("সফলভাবে অ্যাডমিন সাইন-ইন সম্পূর্ণ হয়েছে।", "success");
+      }
     } catch (err: any) {
-      console.error("Login failure:", err);
-      setAuthError(err.message || "An authentication exception occurred.");
+      console.error("Auth Failure Error:", err);
+      let errorMsg = err.message || "একটি ত্রুটি ঘটেছে।";
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        errorMsg = "ভুল ইমেইল অথবা পাসওয়ার্ড। অনুগ্রহ করে চেক করে পুনরায় চেষ্টা করুন অথবা অ্যাকাউন্ট না থাকলে 'আমার নতুন অ্যাকাউন্ট তৈরি করুন' সিলেক্ট করে পাসওয়ার্ড দিয়ে নতুন অ্যাকাউন্ট তৈরি করুন।";
+      } else if (err.code === 'auth/weak-password') {
+        errorMsg = "পাসওয়ার্ডটি অত্যন্ত দুর্বল। পাসওয়ার্ড কমপক্ষে ৬ ক্যারেক্টার হওয়া বাঞ্ছনীয়।";
+      } else if (err.code === 'auth/email-already-in-use') {
+        errorMsg = "এই ইমেইলটি ইতিপূর্বে ব্যবহার করা হয়েছে। অনুগ্রহ করে লগইন করুন।";
+      } else if (err.code === 'auth/invalid-email') {
+        errorMsg = "ইমেল ফর্ম্যাট অকার্যকর বা ভুল।";
+      }
+      setAuthError(errorMsg);
       setAuthLoading(false);
     }
   };
@@ -142,6 +190,43 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
       showStatus("Logged out successfully.", "success");
     } catch (err) {
       console.error("Logout failure:", err);
+    }
+  };
+
+  const handlePasswordChangeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || !confirmNewPassword) {
+      showStatus("দয়া করে পাসওয়ার্ড দিন।", "danger");
+      return;
+    }
+    if (newPassword.length < 6) {
+      showStatus("পাসওয়ার্ড কমপক্ষে ৬ ক্যারেক্টার হওয়া বাঞ্ছনীয়।", "danger");
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      showStatus("দুটি পাসওয়ার্ড মেলেনি। আবার চেষ্টা করুন।", "danger");
+      return;
+    }
+
+    setIsUpdatingPass(true);
+    try {
+      if (auth.currentUser) {
+        await updatePassword(auth.currentUser, newPassword);
+        showStatus("আপনার অ্যাডমিন পাসওয়ার্ড সফলভাবে ও নিরাপদে আপডেট করা হয়েছে!", "success");
+        setNewPassword('');
+        setConfirmNewPassword('');
+      } else {
+        showStatus("কোনো লগইন করা ইউজার পাওয়া যায়নি। দয়া করে আবার লগইন করুন।", "danger");
+      }
+    } catch (err: any) {
+      console.error("Password update error:", err);
+      let errorMsg = err.message || "পাসওয়ার্ড আপডেট করা যায়নি।";
+      if (err.code === 'auth/requires-recent-login') {
+        errorMsg = "নিরাপত্তার স্বার্থে পাসওয়ার্ড পরিবর্তনের জন্য আপনাকে অতি সম্প্রতি লগইন করতে হবে। দয়া করে একবার লগআউট করে আবার লগইন করুন, এরপর পাসওয়ার্ড পরিবর্তন করুন।";
+      }
+      showStatus(errorMsg, "danger");
+    } finally {
+      setIsUpdatingPass(false);
     }
   };
 
@@ -402,26 +487,54 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           </div>
 
           {!isConfigured && (
-            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-3.5 text-xs text-slate-300">
+            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-4 text-xs text-slate-300">
               <div className="flex items-center gap-2 text-amber-400 font-semibold font-sans">
                 <AlertTriangle size={15} className="shrink-0" />
-                <span>নতুন Firebase প্রোজেক্ট সেটআপ করুন (Secure Mode)</span>
+                <span>ফায়ারবেস এনভায়রনমেন্ট সেটআপ ভ্যালুসমূহ (Firebase Setup Key-Values)</span>
               </div>
               <p className="text-[11px] leading-relaxed text-slate-400">
-                আপনার GitHub নিরাপত্তা নিশ্চিত করতে হার্ডকোডেড সিক্রেট ফাইল রিমুভ করা হয়েছে। এখন আপনার নতুন Firebase প্রজেক্ট সচল করার জন্য AI Studio-এর <strong>Settings</strong> বা <strong>Secrets</strong> মেনু থেকে নিচের এনভায়রনমেন্ট ভেরিয়েবলগুলো (Environment Variables) যোগ করুন:
+                আপনার <strong>Vercel Dashboard / AI Studio Secrets</strong>-এ নিচের এনভায়রনমেন্ট ভেরিয়েবলগুলো (Environment Variables) যোগ করতে হবে। এগুলো যোগ করে Vercel-এ রি-ডিপ্লয় (Redeploy) করলেই Vercel লিংক দিয়ে সাইন-ইন সঠিকভাবে চলতে শুরু করবে:
               </p>
-              <div className="space-y-1 bg-slate-950 p-3 rounded-xl border border-slate-800/80 font-mono text-[10px] text-purple-300">
-                <div>VITE_FIREBASE_API_KEY</div>
-                <div>VITE_FIREBASE_AUTH_DOMAIN</div>
-                <div>VITE_FIREBASE_PROJECT_ID</div>
-                <div>VITE_FIREBASE_STORAGE_BUCKET</div>
-                <div>VITE_FIREBASE_MESSAGING_SENDER_ID</div>
-                <div>VITE_FIREBASE_APP_ID</div>
-                <div>VITE_FIREBASE_FIRESTORE_DATABASE_ID (ঐচ্ছিক)</div>
+
+              <div className="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-[9.5px]">
+                <div className="flex flex-col sm:flex-row sm:justify-between border-b border-slate-900 pb-1.5 gap-1">
+                  <span className="text-purple-400 font-bold">VITE_FIREBASE_API_KEY</span>
+                  <span className="text-emerald-400 break-all select-all">"AIzaSyC9ZtpXbUzIiFBejJ1Ja7TcH4j3UbeIZi0"</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between border-b border-slate-900 pb-1.5 gap-1">
+                  <span className="text-purple-400 font-bold">VITE_FIREBASE_AUTH_DOMAIN</span>
+                  <span className="text-emerald-400 break-all select-all">"genial-parser-g6tp2.firebaseapp.com"</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between border-b border-slate-900 pb-1.5 gap-1">
+                  <span className="text-purple-400 font-bold">VITE_FIREBASE_PROJECT_ID</span>
+                  <span className="text-emerald-400 break-all select-all">"genial-parser-g6tp2"</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between border-b border-slate-900 pb-1.5 gap-1">
+                  <span className="text-purple-400 font-bold">VITE_FIREBASE_STORAGE_BUCKET</span>
+                  <span className="text-emerald-400 break-all select-all">"genial-parser-g6tp2.firebasestorage.app"</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between border-b border-slate-900 pb-1.5 gap-1">
+                  <span className="text-purple-400 font-bold">VITE_FIREBASE_MESSAGING_SENDER_ID</span>
+                  <span className="text-emerald-400 break-all select-all">"618539864809"</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between border-b border-slate-900 pb-1.5 gap-1">
+                  <span className="text-purple-400 font-bold">VITE_FIREBASE_APP_ID</span>
+                  <span className="text-emerald-400 break-all select-all">"1:618539864809:web:0ca11b242b91aa65e11678"</span>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-1">
+                  <span className="text-purple-400 font-bold">VITE_FIREBASE_FIRESTORE_DATABASE_ID</span>
+                  <span className="text-emerald-400 break-all select-all font-semibold">"ai-studio-2423ff64-af59-4327-b2a2-39217a01897e"</span>
+                </div>
               </div>
-              <p className="text-[10px] text-slate-500 leading-normal italic">
-                * মনে রাখবেন, এই এনভায়রনমেন্ট ভ্যালুগুলো শুধুমাত্র আপনার ব্রাউজার ও হোস্টিং এনভায়রনমেন্টে থাকবে, কখনো GitHub রিপোজিটরিতে প্রকাশ বা পুশ হবে না।
-              </p>
+
+              <div className="border-t border-slate-800/80 pt-2.5 text-[10px] text-slate-500 leading-normal space-y-1.5">
+                <p>
+                  👉 <strong>Vercel Settings</strong> এ গিয়ে এগুলো সেভ করার পর অবশ্যই <strong>Deployments</strong> ট্যাব থেকে সর্বশেষ বিল্ডটি <strong>Redeploy</strong> করবেন।
+                </p>
+                <p className="italic">
+                  * Note: These environment variables are safely bundled at build-time. Go to Vercel Project Settings &gt; Environment Variables, add them, and redeploy.
+                </p>
+              </div>
             </div>
           )}
 
@@ -432,52 +545,137 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                 <span>{authError}</span>
               </div>
 
-              {authError.toLowerCase().includes('unauthorized-domain') && (
-                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl space-y-4 text-xs leading-relaxed text-slate-300">
-                  <div className="flex items-center gap-2 text-amber-400 font-semibold font-sans">
-                    <AlertTriangle size={16} className="shrink-0" />
-                    <span>Firebase Authorized Domain Error Detected</span>
+              {(authError.toLowerCase().includes('api-key') || authError.toLowerCase().includes('key-not-valid') || authError.toLowerCase().includes('api_key') || authError.toLowerCase().includes('invalid')) && (
+                <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl space-y-4 text-xs leading-relaxed text-slate-300">
+                  <div className="flex items-center gap-2 text-purple-400 font-semibold font-sans">
+                    <Sparkles size={16} className="shrink-0 animate-pulse" />
+                    <span>Vercel Environment Setup Required (Vercel ও ফায়ারবেস কানেকশন গাইড)</span>
                   </div>
 
-                  <div className="space-y-3 text-slate-200">
-                    <p className="font-semibold text-slate-150">
-                      আপনার ব্রাউজারের কারেন্ট ডোমেনটি Firebase প্রোজেক্টের <strong>Authorized Domains (অনুমোদিত ডোমেন)</strong> তালিকায় যোগ করা নেই। এটি সমাধান করতে নিচের ধাপগুলো সম্পন্ন করুন:
+                  <div className="space-y-3.5">
+                    <p className="text-slate-200 font-medium">
+                      আপনার Vercel প্রজেক্টে এখনও Firebase-এর সিক্রেট এনভায়রনমেন্ট ভ্যারিয়েবলগুলো (Environment Variables) যোগ করা হয়নি। এটি সমাধান করতে নিচের সহজ ধাপগুলো অনুসরণ করুন:
                     </p>
 
-                    <ol className="list-decimal list-inside space-y-2 pl-1 text-[11px] text-slate-300">
+                    <ol className="list-decimal list-inside space-y-2.5 text-[11px] text-slate-300 pl-1">
                       <li>
-                        সরাসরি নিচের বাটনে ক্লিক করে ফায়ারবেস কনসোলের অথেনটিকেশন সেটিংসে যান:<br />
-                        <a 
-                          href="https://console.firebase.google.com/project/genial-parser-g6tp2/authentication/settings" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-purple-400 hover:text-purple-300 underline font-mono font-bold mt-1.5"
-                        >
-                          Firebase Console Settings ↗
-                        </a>
+                        আপনার <strong>Vercel Dashboard</strong>-এ যান এবং আপনার প্রজেক্টটি সিলেক্ট করুন।
                       </li>
                       <li>
-                        সেখানের <strong>Authorized domains (অনুমোদিত ডোমেনসমূহ)</strong> সেকশনে গিয়ে <strong>Add domain</strong> বাটনে ক্লিক করুন।
+                        <strong>Settings</strong> ট্যাব থেকে <strong>Environment Variables</strong> অপশনে ক্লিক করুন।
                       </li>
                       <li>
-                        নিচের ডোমেন টেক্সটটি কপি করে সেখানে যোগ (Add) করুন:
-                        <div className="my-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1 font-mono text-[10px] text-emerald-400 select-all">
-                          <div>ais-dev-7ydkkoxbt24i4epdzpgpmu-376430413500.asia-southeast1.run.app</div>
-                          <div>ais-pre-7ydkkoxbt24i4epdzpgpmu-376430413500.asia-southeast1.run.app</div>
-                          <div>mahfuz02.vercel.app</div>
+                        নিচের প্রতিটি ভ্যালু এক এক করে <strong>Key</strong> এবং <strong>Value</strong> হিসেবে কপি-পেস্ট করে যোগ করুন:
+                        
+                        <div className="mt-2.5 space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-[9.5px]">
+                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-slate-900 pb-1.5 gap-1">
+                            <span className="text-purple-400">VITE_FIREBASE_API_KEY</span>
+                            <span className="text-emerald-400 break-all select-all">"AIzaSyC9ZtpXbUzIiFBejJ1Ja7TcH4j3UbeIZi0"</span>
+                          </div>
+                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-slate-900 pb-1.5 gap-1">
+                            <span className="text-purple-400">VITE_FIREBASE_AUTH_DOMAIN</span>
+                            <span className="text-emerald-400 break-all select-all">"genial-parser-g6tp2.firebaseapp.com"</span>
+                          </div>
+                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-slate-900 pb-1.5 gap-1">
+                            <span className="text-purple-400">VITE_FIREBASE_PROJECT_ID</span>
+                            <span className="text-emerald-400 break-all select-all">"genial-parser-g6tp2"</span>
+                          </div>
+                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-slate-900 pb-1.5 gap-1">
+                            <span className="text-purple-400">VITE_FIREBASE_STORAGE_BUCKET</span>
+                            <span className="text-emerald-400 break-all select-all">"genial-parser-g6tp2.firebasestorage.app"</span>
+                          </div>
+                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-slate-900 pb-1.5 gap-1">
+                            <span className="text-purple-400">VITE_FIREBASE_MESSAGING_SENDER_ID</span>
+                            <span className="text-emerald-400 break-all select-all">"618539864809"</span>
+                          </div>
+                          <div className="flex flex-col sm:flex-row sm:justify-between border-b border-slate-900 pb-1.5 gap-1">
+                            <span className="text-purple-400">VITE_FIREBASE_APP_ID</span>
+                            <span className="text-emerald-400 break-all select-all">"1:618539864809:web:0ca11b242b91aa65e11678"</span>
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-1">
+                            <span className="text-purple-400">VITE_FIREBASE_FIRESTORE_DATABASE_ID</span>
+                            <span className="text-emerald-400 break-all select-all font-bold">"ai-studio-2423ff64-af59-4327-b2a2-39217a01897e"</span>
+                          </div>
                         </div>
                       </li>
                       <li>
-                        ডোমেনটি সফলভাবে অ্যাড করার পর এই পেজটি রিফ্রেশ দিন এবং আবার গুগল সাইন-ইন বাটন চেপে এডমিনে প্রবেশ করুন।
+                        সবগুলো ভ্যালু সেভ করা শেষ হলে Vercel-এর <strong>Deployments</strong> ট্যাবে গিয়ে সর্বশেষ ডিপ্লয়মেন্টটির পাশে 3-dots ওপরে চাপুন এবং <strong>Redeploy</strong> বাটনে ক্লিক করুন। নতুন বিল্ড শেষ হওয়ার সাথে সাথেই সাইন-ইন সঠিকভাবে চলতে শুরু করবে!
                       </li>
                     </ol>
 
-                    <div className="border-t border-slate-800 pt-3 mt-3">
-                      <p className="font-semibold text-slate-100 text-[11px]">
-                        English Instructions:
+                    <div className="border-t border-slate-800/80 pt-3 mt-1 space-y-1.5 text-[11px]">
+                      <p className="font-bold text-slate-100 uppercase tracking-wider text-[10px]">English Instructions:</p>
+                      <p className="text-slate-400">
+                        Vite bundles environment variables at build-time. Since you deployed to Vercel without adding the Firebase variables, Firebase initialized with empty/dummy values.
                       </p>
-                      <p className="text-[10px] text-slate-400 mt-1">
-                        Go to your Firebase Console settings and add the <strong>run.app</strong> and <strong>vercel.app</strong> domains listed above to your <strong>Authorized domains</strong>, then save and refresh this page to log in.
+                      <p className="text-slate-400">
+                        To resolve this, add the <strong>VITE_FIREBASE_*</strong> keys listed above to your <strong>Vercel Project Settings &gt; Environment Variables</strong>, then go to the <strong>Deployments</strong> tab in Vercel and trigger a <strong>Redeploy</strong>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {authError.toLowerCase().includes('unauthorized-domain') && (
+                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl space-y-4 text-xs leading-relaxed text-slate-300">
+                  <div className="flex items-center gap-2 text-amber-400 font-semibold font-sans">
+                    <AlertTriangle size={16} className="shrink-0 animate-pulse" />
+                    <span>Firebase Authorized Domain Error (ডোমেন সম্পর্কিত গুরুত্বপূর্ণ তথ্য)</span>
+                  </div>
+
+                  <div className="space-y-3 text-slate-200">
+                    <div className="p-3 bg-red-950/40 border border-red-500/20 rounded-xl space-y-1.5 text-[11px] text-red-200">
+                      <p className="font-bold">⚠️ "Domain add korar option nei" কেন দেখাচ্ছে?</p>
+                      <p>
+                        আপনি বর্তমানে যে Firebase প্রজেক্টের ভ্যালুগুলো (`genial-parser-...`) দেখছেন, তা AI Studio-র তৈরি করা অস্থায়ী স্যান্ডবক্স প্রজেক্ট। এর মূল এডমিন অ্যাক্সেস শুধুমাত্র AI Studio প্ল্যাটফর্মের কাছে আছে, তাই এই ডেমো প্রজেক্টের কনসোলে আপনার নতুন কাস্টম ভার্সেল ডোমেন (`mahfuz02.vercel.app`) সরাসরি যুক্ত করার কোনো কনসোল অপশন আপনি পাবেন না।
+                      </p>
+                      <p className="font-semibold text-amber-300">
+                        💡 সমাধান: আপনাকে আপনার নিজের একটি ফ্রি Firebase প্রজেক্ট ব্যবহার করতে হবে (যেমন: `mahfuz002-b0b26` বা আপনার তৈরি কোনো নতুন প্রজেক্ট) যেখানে আপনার সম্পূর্ণ এডমিন অ্যাক্সেস থাকবে।
+                      </p>
+                    </div>
+
+                    <p className="font-semibold text-slate-150">
+                      আপনার নিজের কাস্টম Firebase প্রজেক্টের মাধ্যমে Vercel ডোমেন সচল করার ৩ মিনিটের সহজ গাইড:
+                    </p>
+
+                    <ol className="list-decimal list-inside space-y-2.5 pl-1 text-[11px] text-slate-300">
+                      <li>
+                        প্রথমে সরাসরি আপনার নিজের{' '}
+                        <a 
+                          href="https://console.firebase.google.com/" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-purple-400 hover:text-purple-300 underline font-bold inline-flex items-center gap-0.5"
+                        >
+                          Firebase Console ↗
+                        </a>-এ যান এবং আপনার তৈরিকৃত প্রজেক্টে (যেমন: <code className="text-pink-400 font-mono">mahfuz002-b0b26</code>) প্রবেশ করুন।
+                      </li>
+                      <li>
+                        বাঁদিকের মেনু থেকে <strong>Build &gt; Authentication</strong> এ যান, তারপর <strong>Settings</strong> ট্যাবে ক্লিক করুন।
+                      </li>
+                      <li>
+                        সেখানকার <strong>Authorized domains (অনুমোদিত ডোমেনসমূহ)</strong> সেকশনে গিয়ে <strong>Add domain</strong> বাটনে ক্লিক করে নিচে দেওয়া আপনার Vercel ডোমেনটি যোগ বা পেস্ট করুন (আপনার নিজস্ব প্রোজেক্টে এই অপশনটি ১০০% সচল থাকবে):
+                        <div className="my-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 font-mono text-[10.5px] text-emerald-400 select-all font-bold">
+                          mahfuz02.vercel.app
+                        </div>
+                      </li>
+                      <li>
+                        এবার আপনার ফায়ারবেস প্রজেক্টের কাস্টম SDK Web App Config ভ্যালুগুলো (API Key, Auth Domain, Project ID ইত্যাদি) আপনার <strong>Vercel Project Settings &gt; Environment Variables</strong>-এ এক এক করে যোগ করে দিন।
+                      </li>
+                      <li>
+                        সবশেষে Vercel-এর <strong>Deployments</strong> ট্যাবে গিয়ে সর্বশেষ ডিপ্লয়মেন্টের পাশে ৩-ডটসে চেপে <strong>Redeploy</strong> বাটনে ক্লিক করুন। ব্যস! নতুন কাস্টম ফায়ারবেস দিয়ে আপনার সাইন-ইন সঠিকভাবে চলতে শুরু করবে!
+                      </li>
+                    </ol>
+
+                    <div className="border-t border-slate-800 pt-3 mt-3 text-[11px]">
+                      <p className="font-bold text-slate-100 uppercase tracking-wider text-[10px]">
+                        English Summary:
+                      </p>
+                      <p className="text-slate-400 mt-1">
+                        The demo Firebase project (<code className="text-pink-400 font-mono">genial-parser-...</code>) is a platform-managed sandbox, so you do not have permission to access its Firebase console or add authorized domains.
+                      </p>
+                      <p className="text-slate-400 mt-1">
+                        To resolve this, please use your <strong>own custom Firebase project</strong> (like <code className="text-pink-400 font-mono">mahfuz002-b0b26</code> or any new one). Go to your own Firebase console, choose your project, navigate to <strong>Authentication &gt; Settings &gt; Authorized domains</strong>, click <strong>Add domain</strong> and add <code className="text-emerald-400 font-mono font-bold">mahfuz02.vercel.app</code>. Finally, update your <strong>Vercel Project &gt; Environment Variables</strong> with your custom credentials and trigger a <strong>Redeploy</strong>!
                       </p>
                     </div>
                   </div>
@@ -486,23 +684,65 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
             </div>
           )}
 
-          <div className="p-4 bg-slate-950/60 rounded-2xl border border-slate-800/80 space-y-2.5">
-            <h4 className="text-xs font-mono text-slate-400">Security Parameters:</h4>
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <Check size={14} className="text-purple-500" />
-              <span>Google Sign-In POPUP Integration</span>
-            </div>
-          </div>
+          <form onSubmit={handleEmailAuth} className="space-y-4">
+            <div className="p-4 bg-slate-950/60 rounded-2xl border border-slate-800/85 space-y-4">
+              <h4 className="text-xs font-mono text-slate-400 uppercase tracking-widest border-b border-slate-900 pb-2 flex items-center gap-1.5">
+                <Lock size={12} className="text-purple-400" />
+                <span>Secure Credentials (এডমিন অথেনটিকেশন):</span>
+              </h4>
+              
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">
+                  Admin Email (অ্যাডমিন ইমেইল)
+                </label>
+                <input
+                  type="email"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  className="w-full bg-slate-900/60 border border-slate-800 focus:border-purple-500 p-3 rounded-xl text-slate-200 text-xs focus:outline-none transition-colors"
+                  placeholder="e.g., mahfujar003@gmail.com"
+                  required
+                />
+              </div>
 
-          <button
-            onClick={handleGoogleLogin}
-            className="w-full py-4 px-6 bg-gradient-to-r from-purple-600/60 to-pink-600/60 hover:from-purple-500 hover:to-pink-500 text-white rounded-2xl font-medium tracking-wide transition-all duration-300 shadow-lg shadow-purple-600/10 hover:shadow-purple-500/20 font-sans flex items-center justify-center gap-3.5 opacity-80 hover:opacity-100"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.986 0-.74-.08-1.3-.177-1.86H12.24z"/>
-            </svg>
-            Google Identity Gateway
-          </button>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">
+                  Password (পাসওয়ার্ড)
+                </label>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className="w-full bg-slate-900/60 border border-slate-800 focus:border-purple-500 p-3 rounded-xl text-slate-200 text-xs focus:outline-none transition-colors"
+                  placeholder="কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-4 px-6 bg-gradient-to-r from-purple-600/70 to-pink-600/70 hover:from-purple-500 hover:to-pink-500 text-white rounded-2xl font-semibold tracking-wide transition-all duration-300 shadow-lg shadow-purple-600/10 hover:shadow-purple-500/20 font-sans flex items-center justify-center gap-2"
+            >
+              <Check size={16} />
+              <span>{registerMode ? "আমার নতুন অ্যাকাউন্ট তৈরি করুন" : "অ্যাডমিন প্যানেলে প্রবেশ করুন"}</span>
+            </button>
+
+            <div className="text-center pt-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setRegisterMode(!registerMode);
+                  setAuthError(null);
+                }}
+                className="text-xs text-purple-400 hover:text-purple-300 underline underline-offset-4 transition-all"
+              >
+                {registerMode 
+                  ? "ইতিমধ্যে অ্যাকাউন্ট আছে? সাইন-ইন বা লগইন করুন" 
+                  : "নতুন ইউজার? আমার নতুন অ্যাকাউন্ট তৈরি করুন (Register instead)"}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     );
@@ -592,6 +832,21 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
               </span>
               <ChevronRight size={12} className={activeTab === 'contact' ? 'opacity-100' : 'opacity-40'} />
             </button>
+
+            <button
+              onClick={() => setActiveTab('security')}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-medium text-xs font-sans transition-all duration-300 ${
+                activeTab === 'security'
+                  ? 'bg-purple-600 text-white font-semibold'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <span className="flex items-center gap-2.5">
+                <Lock size={15} />
+                Security Settings (নিরাপত্তা)
+              </span>
+              <ChevronRight size={12} className={activeTab === 'security' ? 'opacity-100' : 'opacity-40'} />
+            </button>
           </nav>
         </div>
 
@@ -662,21 +917,33 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                   )}
                 </div>
                 
-                <div className="space-y-2 text-center sm:text-left">
-                  <h4 className="text-sm font-sans font-bold text-white">Avatar Artifact</h4>
-                  <p className="text-xs text-slate-500 font-mono">Accepts JPG/PNG, uploads directly to Storage.</p>
+                <div className="space-y-3 text-center sm:text-left flex-1">
+                  <h4 className="text-sm font-sans font-bold text-white">Avatar Image (অবতার ছবি)</h4>
+                  <p className="text-xs text-slate-500 font-mono">JPG/PNG ফাইল আপলোড করুন অথবা সরাসরি ছবির লিংক ডানদিকের বক্সে পেস্ট করুন।</p>
                   
-                  <label className="inline-flex items-center gap-2.5 px-4 py-2 bg-slate-950 border border-slate-800 hover:bg-slate-800 hover:text-white rounded-xl text-xs font-sans font-medium text-slate-300 cursor-pointer transition-colors">
-                    <Upload size={14} />
-                    {isUploadingAvatar ? "Processing Upload..." : "Upload Avatar"}
+                  <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                    <label className="inline-flex justify-center items-center gap-2 px-4 py-2 bg-slate-950 border border-slate-800 hover:bg-slate-800 hover:text-white rounded-xl text-xs font-sans font-medium text-slate-300 cursor-pointer transition-colors shrink-0">
+                      <Upload size={14} />
+                      {isUploadingAvatar ? "Processing Upload..." : "Upload Profile Photo"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarFileSelect}
+                        className="hidden"
+                        disabled={isUploadingAvatar}
+                      />
+                    </label>
+                    
+                    <span className="text-xs text-slate-600 hidden sm:inline">OR</span>
+                    
                     <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarFileSelect}
-                      className="hidden"
-                      disabled={isUploadingAvatar}
+                      type="text"
+                      value={profileForm.avatarUrl || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, avatarUrl: e.target.value }))}
+                      className="flex-1 px-3.5 py-2 bg-slate-950 border border-slate-800 text-slate-200 rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
+                      placeholder="সরাসরি ছবির লিংক (Direct Image URL/Link) এখানে পেস্ট করুন"
                     />
-                  </label>
+                  </div>
                 </div>
               </div>
 
@@ -867,6 +1134,66 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                         <p className="text-[9px] font-mono text-purple-400 animate-pulse">Uploading photograph to Cloud Storage...</p>
                       )}
                     </div>
+
+                    {/* Date of Birth */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">Date of Birth (জন্ম তারিখ)</label>
+                      <input
+                        type="text"
+                        value={profileForm.cvDob || ''}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, cvDob: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                        placeholder="E.g., 25 October 2000"
+                      />
+                    </div>
+
+                    {/* Nationality */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">Nationality (জাতীয়তা)</label>
+                      <input
+                        type="text"
+                        value={profileForm.cvNationality || ''}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, cvNationality: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                        placeholder="E.g., Bangladeshi"
+                      />
+                    </div>
+
+                    {/* Gender */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">Gender / Marital Status (লিঙ্গ)</label>
+                      <input
+                        type="text"
+                        value={profileForm.cvGender || ''}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, cvGender: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                        placeholder="E.g., Male"
+                      />
+                    </div>
+
+                    {/* Languages */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">Languages (ভাষাসমূহ)</label>
+                      <input
+                        type="text"
+                        value={profileForm.cvLanguages || ''}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, cvLanguages: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                        placeholder="E.g., Bangla, English"
+                      />
+                    </div>
+                  </div>
+
+                  {/* CV Objective Profile Statement Section */}
+                  <div className="space-y-1.5 mt-4">
+                    <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">CV Objective / Career Summary (ক্যারিয়ারের লক্ষ্য)</label>
+                    <textarea
+                      rows={3}
+                      value={profileForm.cvObjective || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, cvObjective: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500 font-sans"
+                      placeholder="Professional and highly motivated Software Engineer..."
+                    />
                   </div>
 
                   {/* CV Skills Matrix Section */}
@@ -1073,21 +1400,33 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                   )}
                 </div>
 
-                <div className="space-y-2 text-center sm:text-left">
-                  <h4 className="text-xs font-sans font-bold text-white">Project visual preview</h4>
-                  <p className="text-[10px] text-slate-500 font-mono">JPG/PNG documents. Transmits directly to Google Cloud Storage bucket.</p>
+                <div className="space-y-3 text-center sm:text-left flex-1">
+                  <h4 className="text-xs font-sans font-bold text-white">Project visual preview (প্রজেক্ট ছবি)</h4>
+                  <p className="text-[10px] text-slate-500 font-mono">JPG/PNG ফাইল আপলোড করুন অথবা সরাসরি ছবির লিংক ডানদিকের বক্সে পেস্ট করুন।</p>
                   
-                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-slate-950 border border-slate-800 hover:bg-slate-800 hover:text-white rounded-xl text-xs font-sans font-medium text-slate-300 cursor-pointer transition-colors">
-                    <Upload size={13} />
-                    {isUploadingProjImg ? "Uploading..." : "Upload Project Image"}
+                  <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                    <label className="inline-flex justify-center items-center gap-2 px-4 py-2 bg-slate-950 border border-slate-800 hover:bg-slate-800 hover:text-white rounded-xl text-xs font-sans font-medium text-slate-300 cursor-pointer transition-colors shrink-0">
+                      <Upload size={13} />
+                      {isUploadingProjImg ? "Uploading..." : "Upload Project Image File"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProjFileSelect}
+                        className="hidden"
+                        disabled={isUploadingProjImg}
+                      />
+                    </label>
+
+                    <span className="text-[10px] text-slate-600 hidden sm:inline">OR</span>
+
                     <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleProjFileSelect}
-                      className="hidden"
-                      disabled={isUploadingProjImg}
+                      type="text"
+                      value={projectForm.imageUrl}
+                      onChange={(e) => setProjectForm({ ...projectForm, imageUrl: e.target.value })}
+                      className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 text-slate-200 rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
+                      placeholder="সরাসরি ছবির লিংক (Direct Project Image URL/Link) এখানে পেস্ট করুন"
                     />
-                  </label>
+                  </div>
                 </div>
               </div>
 
@@ -1304,6 +1643,77 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-slate-800 disabled:to-slate-800 text-white rounded-xl font-medium text-xs transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
                 Save Contact details
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* TAB WORKSPACE: SECURITY */}
+        {activeTab === 'security' && (
+          <div className="space-y-8 animate-fade-in">
+            <div>
+              <h2 className="text-xl font-sans font-bold text-white flex items-center gap-2.5">
+                <Lock size={18} className="text-purple-400" />
+                Change Password (অ্যাডমিন পাসওয়ার্ড পরিবর্তন)
+              </h2>
+              <p className="text-slate-400 text-xs mt-1 leading-normal">
+                পাসওয়ার্ড পরিবর্তন করুন। এটি সম্পূর্ণ সুরক্ষিত এবং Firebase Authentication গেটওয়ে দ্বারা পরিচালিত হয়। কোডে কোনো পাসওয়ার্ড সংরক্ষিত বা ট্র্যাক করা হয় না।
+              </p>
+            </div>
+
+            <form onSubmit={handlePasswordChangeSubmit} className="bg-slate-900 border border-slate-800 rounded-2.5xl p-6 md:p-8 space-y-6 max-w-xl">
+              <div className="p-4 bg-purple-500/5 border border-purple-500/10 rounded-2xl flex gap-3 text-xs text-slate-300 leading-relaxed">
+                <ShieldAlert size={16} className="text-purple-400 shrink-0" />
+                <div>
+                  <p className="font-semibold text-purple-300">🔒 শতভাগ নিরাপদ ও পাবলিক-কোড ফ্রী</p>
+                  <p className="mt-1 text-slate-400">
+                    আমাদের এই পোর্টফোলিও সাইটের কোড পাবলিক গিটহাব রিপোজিটরিতে হোস্ট করা থাকলেও আপনার নতুন পাসওয়ার্ডটি গিটহাবের কোনো ফাইলে বা কোনো লোকাল ফাইলে সংরক্ষণ করা হবে না। এটি সরাসরি আপনার ফায়ারবেস অথেনটিকেশন ডাটাবেজে ক্লাউড লেভেলে আপডেট হবে।
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">New Password (নতুন পাসওয়ার্ড)</label>
+                  <input
+                    type="password"
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans"
+                    placeholder="কমপক্ষে ৬ অক্ষরের নতুন পাসওয়ার্ড দিন"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Confirm Password (পাসওয়ার্ড নিশ্চিতকরণ)</label>
+                  <input
+                    type="password"
+                    required
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans"
+                    placeholder="নতুন পাসওয়ার্ডটি আবার টাইপ করুন"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isUpdatingPass}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-slate-800 disabled:to-slate-800 text-white rounded-xl font-medium text-xs transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {isUpdatingPass ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                    Updating Password...
+                  </>
+                ) : (
+                  <>
+                    <Check size={14} />
+                    ভেরিফাই এবং পাসওয়ার্ড সেভ করুন
+                  </>
+                )}
               </button>
             </form>
           </div>

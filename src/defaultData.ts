@@ -18,7 +18,12 @@ export const DEFAULT_PROFILE: Profile = {
   cvTitle: "Lead Full-Stack & Cloud Engineer",
   cvEducation: "Bachelor of Science in Computer Science & Engineering - Prime University (2022-2026)\nDiploma in Computer Technology - Sylhet Polytechnic Institute (2018-2022)",
   cvExperience: "Senior Web Developer at Aura Soft Inc (2024 - Present)\n- Spearheaded scalable frontend application builds using React, Next.js, and Tailwind CSS.\n- Optimized full-stack endpoints leading to a 40% speed increment.\n\nSoftware Developer Intern at Chronos (2023 - 2024)\n- Developed rich, real-time widgets, persistent workspace calendars, and interactive user panels.",
-  cvSkills: "TypeScript, React, Next.js, Node.js, Express, Go, Docker, Kubernetes, GCP, Firebase, Tailwind CSS, Framer Motion"
+  cvSkills: "TypeScript, React, Next.js, Node.js, Express, Go, Docker, Kubernetes, GCP, Firebase, Tailwind CSS, Framer Motion",
+  cvDob: "25 October 2000",
+  cvNationality: "Bangladeshi",
+  cvGender: "Male",
+  cvLanguages: "Bangla (Native), English (Professional)",
+  cvObjective: "Professional and highly motivated Software Engineer with 3+ years of experience in full-stack web architecture, looking to deliver elegant, secure, and modern digital products while tackling intricate development challenges."
 };
 
 export const DEFAULT_SKILLS: Skill[] = [

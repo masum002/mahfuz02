@@ -18,6 +18,11 @@ export interface Profile {
   cvEducation?: string;
   cvExperience?: string;
   cvSkills?: string;
+  cvDob?: string;
+  cvNationality?: string;
+  cvGender?: string;
+  cvLanguages?: string;
+  cvObjective?: string;
 }
 
 export interface Skill {
