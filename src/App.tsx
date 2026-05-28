@@ -28,11 +28,15 @@ import ContactSection from './components/Contact';
 import AdminPanel from './components/AdminPanel';
 
 export default function App() {
-  // Safe initialization of view based on query parameters (?view=admin)
+  // Safe initialization of view based on query parameters (?view=admin, ?portal=secure, ?admin=true, or ?secret=admin)
   const getInitialView = (): 'portfolio' | 'admin' => {
     try {
       const params = new URLSearchParams(window.location.search);
-      return params.get('view') === 'admin' ? 'admin' : 'portfolio';
+      const isParamAdmin = params.get('view') === 'admin' || 
+                           params.get('portal') === 'secure' || 
+                           params.get('admin') === 'true' || 
+                           params.get('secret') === 'admin';
+      return isParamAdmin ? 'admin' : 'portfolio';
     } catch (e) {
       return 'portfolio';
     }
@@ -109,6 +113,18 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Force manual scroll restoration to prevent browser from restoring stale scroll positions
+    try {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual';
+      }
+    } catch (e) {
+      console.warn("Could not modify scrollRestoration:", e);
+    }
+    
+    // Always scroll to absolute top on fresh bootstrap load
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
     loadPortfolioData();
 
     // Scroll effect listener for glassy Nav Header
@@ -123,6 +139,12 @@ export default function App() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Ensure top alignment whenever tab or main view switches
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    setMobileMenuOpen(false); // Close mobile navigation if open
+  }, [currentTab, currentView]);
 
   const handleNavigateToContact = () => {
     setCurrentView('portfolio');
@@ -232,17 +254,9 @@ export default function App() {
             </button>
           )}
 
-          {/* Right Header Navigation Panel: Admin, 3-Dots floating option */}
+          {/* Right Header Navigation Panel: Admin indicator if active */}
           <div className="hidden md:flex items-center gap-4">
-            {currentView === 'portfolio' ? (
-              <button
-                onClick={() => setCurrentView('admin')}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600/10 border border-purple-500/20 hover:bg-purple-600 text-purple-400 hover:text-white rounded-xl text-xs font-mono font-semibold uppercase tracking-widest transition-all cursor-pointer shadow-md"
-              >
-                <Lock size={12} />
-                Admin Panel
-              </button>
-            ) : (
+            {currentView === 'admin' && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-green-500/20 bg-green-500/5 text-green-400 font-mono text-xs">
                 <ShieldCheck size={14} />
                 <span>SECURED SESSION</span>
@@ -318,16 +332,6 @@ export default function App() {
                     className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'contact' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
                   >
                     Contact
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      setCurrentView('admin');
-                    }}
-                    className="w-full py-3.5 bg-purple-600/10 border border-purple-500/20 text-purple-400 rounded-xl text-center font-semibold mt-4 flex items-center justify-center gap-2"
-                  >
-                    <Lock size={13} />
-                    ADMIN PORTAL
                   </button>
                 </>
               ) : (
