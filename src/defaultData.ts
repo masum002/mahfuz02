@@ -1,4 +1,4 @@
-import { Profile, Skill, Project, Contact } from './types';
+import { Profile, Skill, Project, Contact, PhotographyItem } from './types';
 
 export const DEFAULT_PROFILE: Profile = {
   name: "MAHFUZ R MASUM",
@@ -80,3 +80,42 @@ export const DEFAULT_CONTACT: Contact = {
   twitter: "https://twitter.com/mahfujar003",
   updatedAt: new Date().toISOString()
 };
+
+export const DEFAULT_PHOTOGRAPHY: PhotographyItem[] = [
+  {
+    id: "ph1",
+    title: "Celestial Nomad",
+    description: "A silhouette of a lone wanderer framed against the stunning brilliance of the Milky Way, capturing the vast, breathtaking solitude of the cosmos.",
+    imageUrl: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&q=80&w=1200",
+    cameraSettings: "f/1.8 | 15s | ISO 3200 | 24mm",
+    location: "Sajek Valley, Bangladesh",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "ph2",
+    title: "Urban Specter",
+    description: "Moody long exposure of neon-glowing downtown speed trails piercing through a rainy midnight fog, showing concrete verticality.",
+    imageUrl: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&q=80&w=1200",
+    cameraSettings: "f/8.0 | 4s | ISO 100 | 50mm",
+    location: "Dhaka Metropolis, BD",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "ph3",
+    title: "Ethereal Mist",
+    description: "Serene morning light filtering through ancient, mossy alpine trees as dense fog rolls down the valley ridge, whispering soft, timeless secrets.",
+    imageUrl: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&q=80&w=1200",
+    cameraSettings: "f/4.0 | 1/160s | ISO 200 | 70mm",
+    location: "Sreemangal Tea Forests, BD",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "ph4",
+    title: "Neon Cyberpunk Gate",
+    description: "Techno-futurism captured in high-contrast neon illumination bouncing off wet asphalt alleys on a quiet Tokyo-style rainy evening.",
+    imageUrl: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=1200",
+    cameraSettings: "f/2.0 | 1/125s | ISO 800 | 35mm",
+    location: "Shibuya Terminal, JP",
+    createdAt: new Date().toISOString()
+  }
+];

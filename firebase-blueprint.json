@@ -54,6 +54,20 @@
         "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp of the last update." }
       },
       "required": ["email"]
+    },
+    "PhotographyItem": {
+      "title": "PhotographyItem",
+      "description": "A dynamic photography gallery item with camera metadata.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Name or title of the photograph." },
+        "description": { "type": "string", "description": "Cinematic details or context." },
+        "imageUrl": { "type": "string", "description": "URL of the photograph." },
+        "cameraSettings": { "type": "string", "description": "Lenses, apertures, shutter and ISO details." },
+        "location": { "type": "string", "description": "Where the image was captured." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["title", "imageUrl"]
     }
   },
   "firestore": {
@@ -72,6 +86,10 @@
     "/contacts/{docId}": {
       "schema": { "$ref": "#/entities/Contact" },
       "description": "Main contact settings. Target ID is usually 'main'."
+    },
+    "/photography/{photographyId}": {
+      "schema": { "$ref": "#/entities/PhotographyItem" },
+      "description": "All cinematic photography showcase instances."
     }
   }
 }

@@ -13,12 +13,13 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage, OperationType, handleFirestoreError, isConfigured } from './firebase';
-import { Profile, Skill, Project, Contact } from './types';
+import { Profile, Skill, Project, Contact, PhotographyItem } from './types';
 import { 
   DEFAULT_PROFILE, 
   DEFAULT_SKILLS, 
   DEFAULT_PROJECTS, 
-  DEFAULT_CONTACT 
+  DEFAULT_CONTACT,
+  DEFAULT_PHOTOGRAPHY
 } from './defaultData';
 
 // Helper to check if Firebase is configured with real credentials (not placeholders)
@@ -332,5 +333,102 @@ export async function uploadImage(file: File, folder: string): Promise<string> {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  }
+}
+
+// PHOTOGRAPHY SERVICE
+export async function fetchPhotographyItems(): Promise<PhotographyItem[]> {
+  const collectionName = 'photography';
+  try {
+    const local = localStorage.getItem('photography_list');
+    if (!isConfigured) {
+      if (local) return JSON.parse(local);
+      return DEFAULT_PHOTOGRAPHY;
+    }
+    const q = query(collection(db, collectionName));
+    const querySnapshot = await getDocs(q);
+    const fetchedItems: PhotographyItem[] = [];
+    querySnapshot.forEach((doc) => {
+      fetchedItems.push({ id: doc.id, ...doc.data() } as PhotographyItem);
+    });
+    
+    if (fetchedItems.length > 0) {
+      // Sort in descending order or default
+      return fetchedItems.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    }
+    
+    if (local) return JSON.parse(local);
+    return DEFAULT_PHOTOGRAPHY;
+  } catch (error) {
+    console.warn("Firestore fetchPhotographyItems error, using fallback data:", error);
+    const local = localStorage.getItem('photography_list');
+    if (local) return JSON.parse(local);
+    return DEFAULT_PHOTOGRAPHY;
+  }
+}
+
+export async function addPhotographyItem(item: Omit<PhotographyItem, 'id'>): Promise<string> {
+  const collectionName = 'photography';
+  const data = {
+    ...item,
+    createdAt: new Date().toISOString()
+  };
+  try {
+    if (!isConfigured) {
+      const tempId = `local_ph_${Date.now()}`;
+      const items = await fetchPhotographyItems();
+      localStorage.setItem('photography_list', JSON.stringify([{ id: tempId, ...data }, ...items]));
+      return tempId;
+    }
+    const docRef = await addDoc(collection(db, collectionName), data);
+    
+    const items = await fetchPhotographyItems();
+    localStorage.setItem('photography_list', JSON.stringify([{ id: docRef.id, ...data }, ...items]));
+    return docRef.id;
+  } catch (error) {
+    const tempId = `local_ph_${Date.now()}`;
+    const items = await fetchPhotographyItems();
+    localStorage.setItem('photography_list', JSON.stringify([{ id: tempId, ...data }, ...items]));
+    handleFirestoreError(error, OperationType.CREATE, collectionName);
+    return tempId;
+  }
+}
+
+export async function updatePhotographyItem(id: string, item: Omit<PhotographyItem, 'id'>): Promise<void> {
+  const collectionName = 'photography';
+  const data = {
+    ...item,
+    createdAt: item.createdAt || new Date().toISOString()
+  };
+  try {
+    const items = await fetchPhotographyItems();
+    const updatedList = items.map(ph => ph.id === id ? { id, ...data } : ph);
+    localStorage.setItem('photography_list', JSON.stringify(updatedList));
+
+    if (!isConfigured) {
+      return;
+    }
+
+    const docRef = doc(db, collectionName, id);
+    await setDoc(docRef, data);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `${collectionName}/${id}`);
+  }
+}
+
+export async function deletePhotographyItem(id: string): Promise<void> {
+  const collectionName = 'photography';
+  try {
+    const items = await fetchPhotographyItems();
+    localStorage.setItem('photography_list', JSON.stringify(items.filter(ph => ph.id !== id)));
+
+    if (!isConfigured) {
+      return;
+    }
+
+    const docRef = doc(db, collectionName, id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `${collectionName}/${id}`);
   }
 }

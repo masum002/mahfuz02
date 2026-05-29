@@ -15,15 +15,17 @@ import {
   fetchProfile, 
   fetchSkills, 
   fetchProjects, 
-  fetchContact 
+  fetchContact,
+  fetchPhotographyItems
 } from './dataService';
-import { Profile, Skill, Project, Contact } from './types';
+import { Profile, Skill, Project, Contact, PhotographyItem } from './types';
 
 // Importing public components block
 import Hero from './components/Hero';
 import About from './components/About';
 import Skills from './components/Skills';
 import Projects from './components/Projects';
+import Photography from './components/Photography';
 import ContactSection from './components/Contact';
 import AdminPanel from './components/AdminPanel';
 
@@ -43,7 +45,7 @@ export default function App() {
   };
 
   const [currentView, setCurrentView] = useState<'portfolio' | 'admin'>(getInitialView());
-  const [currentTab, setCurrentTab] = useState<'home' | 'about' | 'skills' | 'projects' | 'contact'>('home');
+  const [currentTab, setCurrentTab] = useState<'home' | 'about' | 'skills' | 'projects' | 'photography' | 'contact'>('home');
   const [dotMenuOpen, setDotMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [scrolled, setScrolled] = useState(false);
@@ -53,6 +55,7 @@ export default function App() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [photographyList, setPhotographyList] = useState<PhotographyItem[]>([]);
   const [contact, setContact] = useState<Contact | null>(null);
 
   // Dynamic system explorer running load state
@@ -102,6 +105,9 @@ export default function App() {
 
       const pr = await fetchProjects();
       setProjects(pr);
+
+      const ph = await fetchPhotographyItems();
+      setPhotographyList(ph);
 
       const c = await fetchContact();
       setContact(c);
@@ -240,6 +246,15 @@ export default function App() {
                   <motion.span layoutId="activeTabUnderline" className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-500" />
                 )}
               </button>
+              <button 
+                onClick={() => setCurrentTab('photography')}
+                className={`transition-colors relative py-1 hover:text-white cursor-pointer ${currentTab === 'photography' ? 'text-purple-400 font-bold' : ''}`}
+              >
+                Photography Showcase
+                {currentTab === 'photography' && (
+                  <motion.span layoutId="activeTabUnderline" className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-500" />
+                )}
+              </button>
             </nav>
           ) : (
             <button 
@@ -326,6 +341,15 @@ export default function App() {
                   </button>
                   <button 
                     onClick={() => {
+                      setCurrentTab('photography');
+                      setMobileMenuOpen(false);
+                    }} 
+                    className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'photography' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
+                  >
+                    Photography Showcase
+                  </button>
+                  <button 
+                    onClick={() => {
                       setCurrentTab('contact');
                       setMobileMenuOpen(false);
                     }} 
@@ -396,6 +420,9 @@ export default function App() {
                         <div id="projects" className="pt-8 bg-slate-900/10 py-16">
                           <Projects projects={projects} />
                         </div>
+                        <div id="photography" className="pt-8">
+                          <Photography photos={photographyList} />
+                        </div>
                         <div id="contact" className="pt-8">
                           <ContactSection contact={contact || { email: '', phone: '', address: '', github: '', linkedin: '', twitter: '', updatedAt: '' }} />
                         </div>
@@ -412,6 +439,9 @@ export default function App() {
               )}
               {currentTab === 'projects' && (
                 <Projects projects={projects} />
+              )}
+              {currentTab === 'photography' && (
+                <Photography photos={photographyList} />
               )}
               {currentTab === 'contact' && contact && (
                 <ContactSection contact={contact} />
@@ -448,6 +478,7 @@ export default function App() {
                       <button onClick={() => { setCurrentTab('about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">✨ About me</button>
                       <button onClick={() => { setCurrentTab('skills'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">⚡ Skills Matrix</button>
                       <button onClick={() => { setCurrentTab('projects'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">⚙ Projects</button>
+                      <button onClick={() => { setCurrentTab('photography'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">📸 Photography</button>
                       <button onClick={() => { setCurrentTab('contact'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">📨 Contact</button>
                     </div>
                   </div>

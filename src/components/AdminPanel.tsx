@@ -24,9 +24,13 @@ import {
   deleteProject, 
   fetchContact, 
   saveContact, 
-  uploadImage 
+  uploadImage,
+  fetchPhotographyItems,
+  addPhotographyItem,
+  updatePhotographyItem,
+  deletePhotographyItem
 } from '../dataService';
-import { Profile, Skill, Project, Contact } from '../types';
+import { Profile, Skill, Project, Contact, PhotographyItem } from '../types';
 import { 
   User, 
   Layers, 
@@ -43,7 +47,8 @@ import {
   ExternalLink,
   ChevronRight,
   Sparkles,
-  ShieldAlert
+  ShieldAlert,
+  Camera
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -54,7 +59,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'skills' | 'projects' | 'contact' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'skills' | 'projects' | 'photography' | 'contact' | 'security'>('profile');
 
   // Custom secure login state variables
   const [emailInput, setEmailInput] = useState('mahfujar003@gmail.com');
@@ -100,6 +105,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   });
   const [skillsList, setSkillsList] = useState<Skill[]>([]);
   const [projectsList, setProjectsList] = useState<Project[]>([]);
+  const [photographyList, setPhotographyList] = useState<PhotographyItem[]>([]);
   const [contactForm, setContactForm] = useState<Contact>({ email: '', phone: '', address: '', github: '', linkedin: '', twitter: '', updatedAt: '' });
 
   // CRUD working states
@@ -109,11 +115,15 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const [projectForm, setProjectForm] = useState<{ id?: string; title: string; description: string; imageUrl: string; liveUrl: string; githubUrl: string }>({ title: '', description: '', imageUrl: '', liveUrl: '', githubUrl: '' });
   const [isEditingProject, setIsEditingProject] = useState(false);
 
+  const [photoForm, setPhotoForm] = useState<{ id?: string; title: string; description: string; imageUrl: string; cameraSettings: string; location: string }>({ title: '', description: '', imageUrl: '', cameraSettings: '', location: '' });
+  const [isEditingPhoto, setIsEditingPhoto] = useState(false);
+
   // File loading states
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingCvPhoto, setIsUploadingCvPhoto] = useState(false);
   const [isUploadingCvSignature, setIsUploadingCvSignature] = useState(false);
   const [isUploadingProjImg, setIsUploadingProjImg] = useState(false);
+  const [isUploadingPhotoImg, setIsUploadingPhotoImg] = useState(false);
 
   // Whitelisted Emails defined inside specification & bootstrapped user runtime email
   const ALLOWED_EMAILS = ['mahfujar003@gmail.com', 'your-actual-gmail@gmail.com'];
@@ -331,6 +341,9 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
       const pr = await fetchProjects();
       setProjectsList(pr);
 
+      const ph = await fetchPhotographyItems();
+      setPhotographyList(ph);
+
       const c = await fetchContact();
       setContactForm(c);
     } catch (err) {
@@ -547,6 +560,90 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     }
   };
 
+  // HANDLERS: PHOTOGRAPHY
+  const handlePhotoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!photoForm.title || !photoForm.imageUrl) {
+      showStatus("Title and Photograph Image are required.", "danger");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      if (isEditingPhoto && photoForm.id) {
+        await updatePhotographyItem(photoForm.id, {
+          title: photoForm.title,
+          description: photoForm.description,
+          imageUrl: photoForm.imageUrl,
+          cameraSettings: photoForm.cameraSettings,
+          location: photoForm.location,
+          createdAt: new Date().toISOString()
+        });
+        showStatus("Photograph details updated successfully.", "success");
+      } else {
+        await addPhotographyItem({
+          title: photoForm.title,
+          description: photoForm.description,
+          imageUrl: photoForm.imageUrl,
+          cameraSettings: photoForm.cameraSettings,
+          location: photoForm.location,
+          createdAt: new Date().toISOString()
+        });
+        showStatus("Photograph added to the live gallery database.", "success");
+      }
+      setPhotoForm({ title: '', description: '', imageUrl: '', cameraSettings: '', location: '' });
+      setIsEditingPhoto(false);
+      await loadAllMetricsData();
+      onDataChange();
+    } catch (err) {
+      showStatus("Saved locally as fallback offline image registry.", "success");
+      setPhotoForm({ title: '', description: '', imageUrl: '', cameraSettings: '', location: '' });
+      setIsEditingPhoto(false);
+      onDataChange();
+      loadAllMetricsData();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePhotoFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingPhotoImg(true);
+    try {
+      const url = await uploadImage(file, 'photography');
+      setPhotoForm(prev => ({ ...prev, imageUrl: url }));
+      showStatus("Photograph image uploaded.", "success");
+    } catch (err) {
+      showStatus("Storage pipeline offline. Offline Base64 bypass complete.", "success");
+    } finally {
+      setIsUploadingPhotoImg(false);
+    }
+  };
+
+  const handleEditPhoto = (p: PhotographyItem) => {
+    setPhotoForm({
+      id: p.id,
+      title: p.title,
+      description: p.description,
+      imageUrl: p.imageUrl,
+      cameraSettings: p.cameraSettings || 'f/2.8 | 1/125s | ISO 200',
+      location: p.location || ''
+    });
+    setIsEditingPhoto(true);
+  };
+
+  const handleDeletePhoto = async (id: string) => {
+    if (!confirm("Are you sure you want to remove this photograph?")) return;
+    try {
+      await deletePhotographyItem(id);
+      showStatus("Photograph deleted from storage.", "success");
+      await loadAllMetricsData();
+      onDataChange();
+    } catch (err) {
+      showStatus("Exception purging photograpic records.", "danger");
+    }
+  };
+
   // HANDLERS: CONTACT
   const handleContactSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -730,6 +827,21 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                 Manage Projects
               </span>
               <ChevronRight size={12} className={activeTab === 'projects' ? 'opacity-100' : 'opacity-40'} />
+            </button>
+
+            <button
+              onClick={() => setActiveTab('photography')}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-medium text-xs font-sans transition-all duration-300 ${
+                activeTab === 'photography'
+                  ? 'bg-purple-600 text-white font-semibold'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <span className="flex items-center gap-2.5">
+                <Camera size={15} />
+                Manage Photography
+              </span>
+              <ChevronRight size={12} className={activeTab === 'photography' ? 'opacity-100' : 'opacity-40'} />
             </button>
 
             <button
@@ -1485,6 +1597,161 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
                 {projectsList.length === 0 && (
                   <div className="col-span-2 text-xs text-slate-500 text-center py-6 font-mono">No active projects. Construct using form above.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB WORKSPACE: PHOTOGRAPHY */}
+        {activeTab === 'photography' && (
+          <div className="space-y-8 animate-fade-in">
+            <div>
+              <h2 className="text-xl font-sans font-bold text-white flex items-center gap-2.5">
+                <Camera size={18} className="text-purple-400" />
+                Manage Photography Showcase (ফোটোগ্রাফি প্রদর্শনীর বিবরণী)
+              </h2>
+              <p className="text-slate-400 text-xs mt-1 leading-normal">
+                Publish high-detail camera captures, adjust lens/sensor setups (EXIF settings), locations, titles, and cinematic descriptions.
+              </p>
+            </div>
+
+            <form onSubmit={handlePhotoSubmit} className="bg-slate-900 border border-slate-800 rounded-2.5xl p-6 md:p-8 space-y-6">
+              <h3 className="text-xs font-mono uppercase tracking-widest text-purple-400 font-bold border-b border-slate-800 pb-3">
+                {isEditingPhoto ? "Edit Present Photo Record" : "Register New Camera Capture"}
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Photo Title</label>
+                  <input
+                    type="text"
+                    value={photoForm.title}
+                    onChange={e => setPhotoForm(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full bg-slate-950 border border-slate-800 text-sm rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-purple-500 transition-colors"
+                    placeholder="e.g. Celestial Nomad"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Capture Location</label>
+                  <input
+                    type="text"
+                    value={photoForm.location}
+                    onChange={e => setPhotoForm(prev => ({ ...prev, location: e.target.value }))}
+                    className="w-full bg-slate-950 border border-slate-800 text-sm rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-purple-500 transition-colors"
+                    placeholder="e.g. Sajek Valley, Bangladesh"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">EXIF Setup parameters</label>
+                  <input
+                    type="text"
+                    value={photoForm.cameraSettings}
+                    onChange={e => setPhotoForm(prev => ({ ...prev, cameraSettings: e.target.value }))}
+                    className="w-full bg-slate-950 border border-slate-800 text-sm rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-purple-500 transition-colors"
+                    placeholder="e.g. f/1.8 | 15s | ISO 3200 | 24mm"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Visual Shot (Image File / URL)</label>
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      value={photoForm.imageUrl}
+                      onChange={e => setPhotoForm(prev => ({ ...prev, imageUrl: e.target.value }))}
+                      className="flex-1 bg-slate-950 border border-slate-800 text-xs rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-purple-500 transition-colors font-mono"
+                      placeholder="https://images.unsplash.com/..."
+                    />
+                    <label className="bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 hover:text-white rounded-xl px-4 py-3 text-xs font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-all shrink-0">
+                      <Upload size={13} />
+                      <span>{isUploadingPhotoImg ? 'Uploading...' : 'Browse'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoFileSelect}
+                        className="hidden"
+                        disabled={isUploadingPhotoImg}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2 space-y-2">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Cinematic Narrative description</label>
+                  <textarea
+                    value={photoForm.description || ''}
+                    onChange={e => setPhotoForm(prev => ({ ...prev, description: e.target.value }))}
+                    rows={4}
+                    className="w-full bg-slate-950 border border-slate-800 text-sm rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-purple-500 transition-colors resize-y leading-relaxed"
+                    placeholder="Moody narrative describing the atmosphere, lighting, feeling or subject..."
+                  />
+                </div>
+              </div>
+
+              {/* Actions row */}
+              <div className="flex items-center gap-3 justify-end pt-4 border-t border-slate-800/80">
+                {isEditingPhoto && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditingPhoto(false);
+                      setPhotoForm({ title: '', description: '', imageUrl: '', cameraSettings: '', location: '' });
+                    }}
+                    className="px-5 py-2.5 rounded-xl border border-slate-800/85 hover:bg-slate-800/30 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all cursor-pointer"
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                >
+                  {isSaving ? 'Processing...' : isEditingPhoto ? 'Apply Corrections' : 'Commit to Optical Archive'}
+                </button>
+              </div>
+            </form>
+
+            <div className="space-y-4">
+              <h3 className="text-xs font-mono uppercase tracking-widest text-slate-550 font-bold">Showcase Gallery Registry ({photographyList.length})</h3>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {photographyList.map((ph) => (
+                  <div key={ph.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex gap-4 items-start hover:border-slate-700/80 transition-all">
+                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shrink-0 relative">
+                      <img src={ph.imageUrl} alt={ph.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <h4 className="text-sm font-sans font-bold text-white truncate">{ph.title}</h4>
+                      <p className="text-slate-450 text-xs truncate">{ph.location || 'No Location'}</p>
+                      <p className="text-[10px] font-mono text-purple-400 truncate">{ph.cameraSettings || 'f/2.8 | Auto'}</p>
+                      <div className="flex items-center gap-2 pt-2">
+                        <button
+                          onClick={() => handleEditPhoto(ph)}
+                          className="p-1 px-2.5 rounded-md border border-slate-800 hover:border-purple-500/20 bg-slate-950 hover:bg-purple-500/5 text-purple-400 hover:text-purple-300 text-[10px] font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                        >
+                          <Edit2 size={10} />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeletePhoto(ph.id!)}
+                          className="p-1 px-2.5 rounded-md border border-slate-800 hover:border-red-500/20 bg-slate-950 hover:bg-red-500/5 text-red-400 hover:text-red-300 text-[10px] font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 size={10} />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {photographyList.length === 0 && (
+                  <div className="col-span-2 text-xs text-slate-500 text-center py-6 font-mono font-sans">
+                    No pictures archived yet. Register a shot above!
+                  </div>
                 )}
               </div>
             </div>

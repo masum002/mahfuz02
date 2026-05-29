@@ -54,3 +54,13 @@ export interface Contact {
   twitter: string;
   updatedAt: string;
 }
+
+export interface PhotographyItem {
+  id?: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  cameraSettings?: string; // e.g. "f/1.8 | 1/250s | ISO 100"
+  location?: string; // e.g. "Sylhet, Bangladesh"
+  createdAt: string;
+}
