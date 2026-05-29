@@ -27,6 +27,16 @@ export function isFirebaseConfigured(): boolean {
   return isConfigured;
 }
 
+// Helper to wrap a promise with a timeout to keep the UI super responsive and prevent hanging
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 1500, label: string = 'Firebase Operation'): Promise<T> {
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Timeout: ${label} exceeded ${timeoutMs}ms limit.`));
+    }, timeoutMs);
+  });
+  return Promise.race([promise, timeoutPromise]);
+}
+
 // PROFILE SERVICE
 export async function fetchProfile(): Promise<Profile> {
   const collectionName = 'profile';
@@ -38,7 +48,7 @@ export async function fetchProfile(): Promise<Profile> {
       return DEFAULT_PROFILE;
     }
     const docRef = doc(db, collectionName, docId);
-    const docSnap = await getDoc(docRef);
+    const docSnap = await withTimeout(getDoc(docRef), 1500, "fetchProfile");
     if (docSnap.exists()) {
       return docSnap.data() as Profile;
     }
@@ -83,7 +93,7 @@ export async function fetchSkills(): Promise<Skill[]> {
       return DEFAULT_SKILLS;
     }
     const q = query(collection(db, collectionName));
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await withTimeout(getDocs(q), 1500, "fetchSkills");
     const fetchedSkills: Skill[] = [];
     querySnapshot.forEach((doc) => {
       fetchedSkills.push({ id: doc.id, ...doc.data() } as Skill);
@@ -184,7 +194,7 @@ export async function fetchProjects(): Promise<Project[]> {
       return DEFAULT_PROJECTS;
     }
     const q = query(collection(db, collectionName));
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await withTimeout(getDocs(q), 1500, "fetchProjects");
     const fetchedProjects: Project[] = [];
     querySnapshot.forEach((doc) => {
       fetchedProjects.push({ id: doc.id, ...doc.data() } as Project);
@@ -281,7 +291,7 @@ export async function fetchContact(): Promise<Contact> {
       return DEFAULT_CONTACT;
     }
     const docRef = doc(db, collectionName, docId);
-    const docSnap = await getDoc(docRef);
+    const docSnap = await withTimeout(getDoc(docRef), 1500, "fetchContact");
     if (docSnap.exists()) {
       return docSnap.data() as Contact;
     }
@@ -346,7 +356,7 @@ export async function fetchPhotographyItems(): Promise<PhotographyItem[]> {
       return DEFAULT_PHOTOGRAPHY;
     }
     const q = query(collection(db, collectionName));
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await withTimeout(getDocs(q), 1500, "fetchPhotographyItems");
     const fetchedItems: PhotographyItem[] = [];
     querySnapshot.forEach((doc) => {
       fetchedItems.push({ id: doc.id, ...doc.data() } as PhotographyItem);

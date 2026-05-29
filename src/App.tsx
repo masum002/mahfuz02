@@ -97,20 +97,40 @@ export default function App() {
   // Fetch all core datasets from Firebase Services
   const loadPortfolioData = async () => {
     try {
-      const p = await fetchProfile();
-      setProfile(p);
+      try {
+        const p = await fetchProfile();
+        setProfile(p || null);
+      } catch (err) {
+        console.error("Error loading profile:", err);
+      }
 
-      const s = await fetchSkills();
-      setSkills(s);
+      try {
+        const s = await fetchSkills();
+        setSkills(s || []);
+      } catch (err) {
+        console.error("Error loading skills:", err);
+      }
 
-      const pr = await fetchProjects();
-      setProjects(pr);
+      try {
+        const pr = await fetchProjects();
+        setProjects(pr || []);
+      } catch (err) {
+        console.error("Error loading projects:", err);
+      }
 
-      const ph = await fetchPhotographyItems();
-      setPhotographyList(ph);
+      try {
+        const ph = await fetchPhotographyItems();
+        setPhotographyList(ph || []);
+      } catch (err) {
+        console.error("Error loading photography items:", err);
+      }
 
-      const c = await fetchContact();
-      setContact(c);
+      try {
+        const c = await fetchContact();
+        setContact(c || null);
+      } catch (err) {
+        console.error("Error loading contact:", err);
+      }
     } catch (err) {
       console.error("Critical error in public state loading:", err);
     } finally {
