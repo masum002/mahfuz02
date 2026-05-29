@@ -133,6 +133,11 @@ export default function App() {
 
     loadPortfolioData();
 
+    // Safety fallback timeout to prevent infinite loading screen (e.g. offline or pending firestore database)
+    const safetyTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+
     // Scroll effect listener for glassy Nav Header
     const handleScroll = () => {
       if (window.scrollY > 20) {
@@ -143,7 +148,10 @@ export default function App() {
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(safetyTimeout);
+    };
   }, []);
 
   // Ensure top alignment whenever tab or main view switches

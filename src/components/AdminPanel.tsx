@@ -890,6 +890,78 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
       {/* Main Form workspace */}
       <main className="flex-grow p-6 md:p-10 max-w-4xl overflow-y-auto">
+        {/* Firebase Cloud Connection Banner */}
+        {!isConfigured ? (
+          <div className="mb-8 p-6 rounded-2.5xl bg-amber-500/5 border border-amber-500/20 text-amber-200">
+            <div className="flex items-start gap-4">
+              <span className="p-2 sm:p-2.5 rounded-2xl bg-amber-500/10 text-amber-400 shrink-0">
+                <Camera size={18} className="animate-pulse" />
+              </span>
+              <div className="space-y-2 flex-1">
+                <h3 className="text-sm font-sans font-extrabold text-white">
+                  ⚠️ Firebase ক্লাউডের সাথে কানেক্ট করা হয়নি (লোকাল ব্রাউজার স্টোরেজ অ্যাক্টিভ)
+                </h3>
+                <p className="text-xs text-slate-350 leading-relaxed font-sans">
+                  আপনি যে ব্রাউজার থেকে ছবি বা প্রজেক্ট যোগ করেছেন, সেখানে এটি ঠিকভাবে সাময়িকভাবে দেখা যাচ্ছে কারণ সাইটটি বর্তমানে ব্রাউজারের <strong>Local Storage</strong> ব্যবহার করছে। এটি ক্লাউডে সেভ হয়নি। অন্য কোনো ব্রাউজার, ছদ্মবেশী মোড (Incognito), বা অন্য ফোন/ল্যাপটপ থেকে লাইভ লিংকে প্রবেশ করলে আপনার যোগ করা এই কন্টেন্টগুলো প্রদর্শিত হবে না।
+                </p>
+                <p className="text-xs text-purple-300 font-medium">
+                  আপনার ছবি এবং কন্টেন্ট সবার কাছে সবসময় প্রদর্শন করতে নিচের ধাপগুলো মেনে Firebase কানেক্ট করুন:
+                </p>
+
+                <details className="group border border-slate-800 bg-slate-950/40 rounded-xl mt-3 overflow-hidden">
+                  <summary className="px-4 py-2.5 text-xs font-mono font-bold text-amber-400/95 cursor-pointer select-none hover:text-amber-300 flex items-center justify-between list-none">
+                    <span>⚙️ কিভাবে Firebase কানেক্ট করবেন? (এখানে ক্লিক করুন)</span>
+                    <span className="text-[10px] text-slate-500 transition-transform group-open:rotate-90">▶</span>
+                  </summary>
+                  <div className="p-4 border-t border-slate-800/60 space-y-4 text-xs font-sans text-slate-300 bg-slate-950">
+                    <div className="space-y-1">
+                      <p className="font-bold text-white font-mono text-[11px] text-purple-400">১. Firebase প্রজেক্ট সেটআপ করুন</p>
+                      <ul className="list-disc pl-4 space-y-1 text-slate-400">
+                        <li><a href="https://console.firebase.google.com/" target="_blank" rel="noreferrer" className="text-purple-400 hover:underline">Firebase Console</a>-এ প্রজেক্ট তৈরি করুন।</li>
+                        <li>সেখান থেকে একটি <strong>Web App {"(</>)"}</strong> রেজিস্টার করে Firebase configuration কোডটি সংগ্রহ করুন।</li>
+                        <li><strong>Firestore Database</strong> তৈরি করে 'test mode' সিলেক্ট করুন অথবা rules ট্যাব-এ গিয়ে 'test mode' নিয়ম সেভ করুন।</li>
+                      </ul>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="font-bold text-white font-mono text-[11px] text-purple-400">২. Vercel বা হোস্টিং-এ Environment Variables যুক্ত করুন</p>
+                      <p className="text-slate-400 leading-relaxed">
+                        আপনি যদি <strong>Vercel (যেমন mahfuz02.vercel.app)-এ</strong> সাইট হোস্ট করেন, আপনার Vercel Dashboard-এ গিয়ে Project &gt; Settings &gt; Environment Variables ট্যাবে গিয়ে ঠিক নিচের নামগুলো এবং তাদের ভ্যালু যুক্ত করুন:
+                      </p>
+                      <div className="bg-slate-950 border border-slate-800 p-3 rounded-lg space-y-1.5 font-mono text-[10.5px] text-slate-300 max-h-52 overflow-y-auto select-all">
+                        <div>VITE_FIREBASE_API_KEY = <span className="text-amber-400">_আপনার_API_KEY_</span></div>
+                        <div>VITE_FIREBASE_AUTH_DOMAIN = <span className="text-amber-400">_আপনার_PROJECT_ID_.firebaseapp.com</span></div>
+                        <div>VITE_FIREBASE_PROJECT_ID = <span className="text-amber-400">_আপনার_PROJECT_ID_</span></div>
+                        <div>VITE_FIREBASE_STORAGE_BUCKET = <span className="text-amber-400">_আপনার_PROJECT_ID_.appspot.com</span></div>
+                        <div>VITE_FIREBASE_MESSAGING_SENDER_ID = <span className="text-amber-404">_আপনার_MESSAGING_SENDER_ID_</span></div>
+                        <div>VITE_FIREBASE_APP_ID = <span className="text-amber-400">_আপনার_APP_ID_</span></div>
+                      </div>
+                      <p className="text-[10px] text-slate-450 italic mt-1">
+                        *অবশ্যই খেয়াল রাখবেন যেন বানানে এবং শুরুতে VITE_ অংশটি ঠিক থাকে!
+                      </p>
+                    </div>
+
+                    <div className="space-y-1 pt-1">
+                      <p className="font-bold text-white font-mono text-[11px] text-purple-400">৩. পুনরায় Deploy দিন</p>
+                      <p className="text-slate-400 leading-relaxed">
+                        Environment Variables যুক্ত করার পর আপনার হোস্টিং সার্ভিসটি (Vercel) থেকে <strong>Redeploy</strong> দিন বা পুনরায় বিল্ড করুন। 
+                        এর পর আপনার সাইট স্বয়ংক্রিয়ভাবে ক্লাউড ডাটাবেজের সাথে পার্মানেন্টলি সিঙ্ক হয়ে যাবে এবং যেকোনো ডিভাইস থেকেই আপনার ড্যাশবোর্ডে অ্যাড করা ডাটা সব ব্রাউজারে লাইভ দেখা যাবে!
+                      </p>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-8 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-400/20 text-emerald-300 flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="text-xs font-sans">
+              🟢 <strong>ক্লাউড কানেক্টেড (Firebase Cloud Database Connected):</strong> আপনার পোর্টফোলিও সফলভাবে Firebase ক্লাউডের সাথে যুক্ত আছে। আপনার ডাটা চিরকালের জন্য সুরক্ষিত এবং যেকোনো ব্রাউজার থেকেই লাইভ ভিজিট করা যাবে।
+            </span>
+          </div>
+        )}
+
         {/* Status Messages */}
         {statusMessage && (
           <div className={`p-4 mb-8 rounded-2xl flex items-center justify-between border ${
