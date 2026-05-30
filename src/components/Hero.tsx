@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Download, ChevronDown, Award, Sparkles, RefreshCw } from 'lucide-react';
 import { jsPDF } from 'jspdf';
@@ -24,8 +24,11 @@ export default function Hero({
   loadProgress = 0,
   exploreComplete = false
 }: HeroProps) {
-  const rawRoles = profile.heroRoles || "Lead Full-Stack Engineer, Full Stack Master, Cloud Architect, UI Design Artisan";
-  const titles = rawRoles.split(',').map(r => r.trim()).filter(Boolean);
+  const titles = useMemo(() => {
+    const rawRoles = profile.heroRoles || "Lead Full-Stack Engineer, Full Stack Master, Cloud Architect, UI Design Artisan";
+    return rawRoles.split(',').map(r => r.trim()).filter(Boolean);
+  }, [profile.heroRoles]);
+
   const [currentText, setCurrentText] = useState('');
   const [titleIndex, setTitleIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
@@ -59,7 +62,7 @@ export default function Hero({
 
     const timer = setTimeout(handleTyping, isDeleting ? 40 : 100);
     return () => clearTimeout(timer);
-  }, [charIndex, isDeleting, titleIndex, profile.heroRoles, titles]);
+  }, [charIndex, isDeleting, titleIndex, titles]);
 
   const getBase64ImageFromUrl = async (imgUrl: string): Promise<string | null> => {
     try {
