@@ -8,7 +8,7 @@ import firebaseConfig from '../firebase-applet-config.json';
 const isConfigured = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== "dummy-api-key-for-build";
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId); /* CRITICAL: The app will break without this line */
+export const db = getFirestore(app); /* CRITICAL: Connect to the (default) database to ensure maximum uptime & reliability */
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
