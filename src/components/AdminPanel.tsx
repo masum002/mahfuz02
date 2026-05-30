@@ -130,21 +130,6 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
   // Auth Status Monitor
   useEffect(() => {
-    // Check local session first for seamless offline/fallback admin experience
-    const localSession = localStorage.getItem('localAdminLoggedIn');
-    if (localSession === 'true') {
-      const mockUser = {
-        uid: 'local-admin-mahfuz',
-        email: 'mahfujar003@gmail.com',
-        emailVerified: true,
-      } as any;
-      setUser(mockUser);
-      setAuthLoading(false);
-      setAuthError(null);
-      loadAllMetricsData();
-      return;
-    }
-
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         // Strict Email Lock Verification
@@ -160,10 +145,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           await signOut(auth);
         }
       } else {
-        // Only reset if localSession is not active
-        if (localStorage.getItem('localAdminLoggedIn') !== 'true') {
-          setUser(null);
-        }
+        setUser(null);
       }
       setAuthLoading(false);
     });
@@ -189,55 +171,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     setAuthLoading(true);
     setAuthError(null);
 
-    // Bypasses & direct logins for their requested password "Mrm@6488" for an ultra-smooth setup
-    const isSpecialAdminPassword = cleanEmail === 'mahfujar003@gmail.com' && passwordInput === 'Mrm@6488';
-
-    if (isSpecialAdminPassword) {
-      localStorage.setItem('localAdminLoggedIn', 'true');
-      const mockUser = {
-        uid: 'local-admin-mahfuz',
-        email: 'mahfujar003@gmail.com',
-        emailVerified: true,
-      } as any;
-
-      if (isConfigured) {
-        try {
-          // Attempt Firebase Auth under-the-hood first (to persist on Firebase cloud database if possible)
-          try {
-            await signInWithEmailAndPassword(auth, cleanEmail, passwordInput);
-          } catch (firstErr: any) {
-            // Auto-register under the hood if not yet created in the database
-            if (firstErr.code === 'auth/user-not-found' || firstErr.code === 'auth/invalid-credential') {
-              try {
-                await createUserWithEmailAndPassword(auth, cleanEmail, passwordInput);
-              } catch (regErr: any) {
-                if (regErr.code !== 'auth/email-already-in-use') {
-                  throw regErr;
-                }
-                throw firstErr; // Throw original sign in error (wrong password)
-              }
-            } else {
-              throw firstErr;
-            }
-          }
-          setUser(auth.currentUser || mockUser);
-          showStatus("সফলভাবে ক্লাউড ফায়ারবেস অথেনটিকেশনের মাধ্যমে অ্যাডমিন সাইন-ইন সম্পূর্ণ হয়েছে।", "success");
-        } catch (fbErr: any) {
-          console.warn("Firebase Auth bypassed/failed, executing as local verified admin session:", fbErr);
-          setUser(mockUser);
-          showStatus("লোকাল ভেরিফাইড সেশনের মাধ্যমে অ্যাডমিন প্যানেলে সফলভাবে প্রবেশ করেছেন!", "success");
-        }
-      } else {
-        // Firebase is not configured, login locally!
-        setUser(mockUser);
-        showStatus("অনলাইন ফায়ারবেস সেটআপ ছাড়াও লোকাল সিকিউর কি-পাসওয়ার্ড দিয়ে সফলভাবে অ্যাডমিন প্যানেলে প্রবেশ করেছেন!", "success");
-      }
-      setAuthLoading(false);
-      loadAllMetricsData();
-      return;
-    }
-
-    // Standard Login flow for other credentials
+    // Standard Login flow using pure real-time Firebase Auth
     try {
       if (registerMode) {
         await createUserWithEmailAndPassword(auth, cleanEmail, passwordInput);
@@ -248,7 +182,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           showStatus("সফলভাবে অ্যাডমিন সাইন-ইন সম্পূর্ণ হয়েছে।", "success");
         } catch (signInErr: any) {
           // Auto-registration fallback for empty Firebase/fresh databases
-          if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential') {
+          if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/user-disabled') {
             try {
               await createUserWithEmailAndPassword(auth, cleanEmail, passwordInput);
               showStatus("আপনার অ্যাকাউন্ট প্রথমবার ব্যবহারের জন্য স্বয়ংক্রিয়ভাবে তৈরি হয়েছে এবং সাইন-ইন সম্পূর্ণ হয়েছে!", "success");
@@ -283,7 +217,6 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
   const handleLogout = async () => {
     try {
-      localStorage.removeItem('localAdminLoggedIn');
       await signOut(auth);
       setUser(null);
       showStatus("Logged out successfully.", "success");
@@ -367,8 +300,8 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
       onDataChange();
     } catch (err: any) {
       console.error(err);
-      showStatus("Error storing profile. Saving locally as fallback.", "success");
-      onDataChange();
+      const errMsg = err instanceof Error ? err.message : String(err);
+      showStatus(`Failed to store profile in Firestore: ${errMsg}`, "danger");
     } finally {
       setIsSaving(false);
     }
@@ -432,7 +365,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           percentage: Number(skillForm.percentage),
           createdAt: new Date().toISOString()
         });
-        showStatus("Skill updated in database.", "success");
+        showStatus("Skill updated in database successfully.", "success");
       } else {
         await addSkill({
           name: skillForm.name,
@@ -440,18 +373,16 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           percentage: Number(skillForm.percentage),
           createdAt: new Date().toISOString()
         });
-        showStatus("New skill appended to portfolio.", "success");
+        showStatus("New skill appended to portfolio successfully.", "success");
       }
       setSkillForm({ name: '', category: 'Frontend', percentage: 80 });
       setIsEditingSkill(false);
       await loadAllMetricsData();
       onDataChange();
-    } catch (err) {
-      showStatus("Failed to store skill to firestore. Saved to local cache.", "success");
-      setSkillForm({ name: '', category: 'Frontend', percentage: 80 });
-      setIsEditingSkill(false);
-      onDataChange();
-      loadAllMetricsData();
+    } catch (err: any) {
+      console.error(err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      showStatus(`Failed to store skill in Firestore: ${errMsg}`, "danger");
     } finally {
       setIsSaving(false);
     }
@@ -494,7 +425,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           githubUrl: projectForm.githubUrl,
           createdAt: new Date().toISOString()
         });
-        showStatus("Project details updated.", "success");
+        showStatus("Project details updated successfully.", "success");
       } else {
         await addProject({
           title: projectForm.title,
@@ -504,18 +435,16 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           githubUrl: projectForm.githubUrl,
           createdAt: new Date().toISOString()
         });
-        showStatus("Project added to production deck.", "success");
+        showStatus("Project added to production deck successfully.", "success");
       }
       setProjectForm({ title: '', description: '', imageUrl: '', liveUrl: '', githubUrl: '' });
       setIsEditingProject(false);
       await loadAllMetricsData();
       onDataChange();
-    } catch (err) {
-      showStatus("Stored project to local state. Check configuration schemas.", "success");
-      setProjectForm({ title: '', description: '', imageUrl: '', liveUrl: '', githubUrl: '' });
-      setIsEditingProject(false);
-      onDataChange();
-      loadAllMetricsData();
+    } catch (err: any) {
+      console.error(err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      showStatus(`Failed to store project in Firestore: ${errMsg}`, "danger");
     } finally {
       setIsSaving(false);
     }
@@ -594,12 +523,10 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
       setIsEditingPhoto(false);
       await loadAllMetricsData();
       onDataChange();
-    } catch (err) {
-      showStatus("Saved locally as fallback offline image registry.", "success");
-      setPhotoForm({ title: '', description: '', imageUrl: '', cameraSettings: '', location: '' });
-      setIsEditingPhoto(false);
-      onDataChange();
-      loadAllMetricsData();
+    } catch (err: any) {
+      console.error(err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      showStatus(`Failed to store photograph in Firestore: ${errMsg}`, "danger");
     } finally {
       setIsSaving(false);
     }
@@ -654,8 +581,8 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
       onDataChange();
     } catch (err: any) {
       console.error(err);
-      showStatus("Saved locally as fallback offline file setup.", "success");
-      onDataChange();
+      const errMsg = err instanceof Error ? err.message : String(err);
+      showStatus(`Failed to store contact references in Firestore: ${errMsg}`, "danger");
     } finally {
       setIsSaving(false);
     }
