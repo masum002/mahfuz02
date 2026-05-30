@@ -6,4 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
-firebase-applet-config.json
+# firebase-applet-config.json (Uncomment to allow seamless connection out of the box in production deployments)
+# firebase-applet-config.json
