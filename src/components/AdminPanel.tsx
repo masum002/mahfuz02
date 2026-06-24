@@ -200,6 +200,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   // HANDLERS: PROFILE
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!confirm("আপনি কি প্রোফাইল তথ্য পরিবর্তন করতে চান? 'OK' দিলে পরিবর্তনটি ফায়ারবেসে সংরক্ষিত হবে।")) return;
     setIsSaving(true);
     try {
       await saveProfile(profileForm);
@@ -217,6 +218,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const handleSkillSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!skillForm.name || !skillForm.category) return;
+    if (!confirm("আপনি কি এই স্কিল তথ্যটি সংরক্ষণ করতে চান? 'OK' দিলে এটি ফায়ারবেসে সংরক্ষিত হবে।")) return;
     setIsSaving(true);
     try {
       if (isEditingSkill && skillForm.id) {
@@ -260,7 +262,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   };
 
   const handleDeleteSkill = async (id: string) => {
-    if (!confirm("Are you sure you want to remove this skill record?")) return;
+    if (!confirm("আপনি কি নিশ্চিত যে আপনি এই স্কিলটি মুছে ফেলতে চান? 'OK' দিলে এটি ফায়ারবেস থেকে চিরতরে মুছে যাবে।")) return;
     try {
       await deleteSkill(id);
       showStatus("Skill removed from portfolio schema.", "success");
@@ -275,6 +277,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const handleProjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!projectForm.title || !projectForm.description) return;
+    if (!confirm("আপনি কি এই প্রজেক্ট তথ্যটি সংরক্ষণ করতে চান? 'OK' দিলে এটি ফায়ারবেসে সংরক্ষিত হবে।")) return;
     setIsSaving(true);
     try {
       if (isEditingProject && projectForm.id) {
@@ -324,7 +327,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   };
 
   const handleDeleteProject = async (id: string) => {
-    if (!confirm("Are you sure you want to remove this project production?")) return;
+    if (!confirm("আপনি কি নিশ্চিত যে আপনি এই প্রজেক্টটি মুছে ফেলতে চান? 'OK' দিলে এটি ফায়ারবেস থেকে চিরতরে মুছে যাবে।")) return;
     try {
       await deleteProject(id);
       showStatus("Project deleted.", "success");
@@ -342,6 +345,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
       showStatus("Title and Photograph Image are required.", "danger");
       return;
     }
+    if (!confirm("আপনি কি এই ফটোগ্রাফি তথ্যটি সংরক্ষণ করতে চান? 'OK' দিলে এটি ফায়ারবেসে সংরক্ষিত হবে।")) return;
     setIsSaving(true);
     try {
       if (isEditingPhoto && photoForm.id) {
@@ -391,7 +395,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   };
 
   const handleDeletePhoto = async (id: string) => {
-    if (!confirm("Are you sure you want to remove this photograph?")) return;
+    if (!confirm("আপনি কি নিশ্চিত যে আপনি এই ফটোগ্রাফটি মুছে ফেলতে চান? 'OK' দিলে এটি ফায়ারবেস থেকে চিরতরে মুছে যাবে।")) return;
     try {
       await deletePhotographyItem(id);
       showStatus("Photograph deleted from storage.", "success");
@@ -405,6 +409,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   // HANDLERS: CONTACT
   const handleContactSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!confirm("আপনি কি যোগাযোগের তথ্য পরিবর্তন করতে চান? 'OK' দিলে পরিবর্তনটি ফায়ারবেসে সংরক্ষিত হবে।")) return;
     setIsSaving(true);
     try {
       await saveContact(contactForm);

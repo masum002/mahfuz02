@@ -6,15 +6,20 @@ import { getStorage } from 'firebase/storage';
 import firebaseConfigJson from '../firebase-applet-config.json';
 
 // Build-time configuration with environment variable overrides
+// CRITICAL: We prioritize firebase-applet-config.json if it contains a valid key to ignore stale platform environment variables.
+const isJsonValid = !!firebaseConfigJson && !!firebaseConfigJson.apiKey && firebaseConfigJson.apiKey !== "dummy-api-key-for-build" && firebaseConfigJson.apiKey.trim() !== "";
+
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigJson.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigJson.authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigJson.projectId,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigJson.storageBucket,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJson.messagingSenderId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigJson.appId,
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || firebaseConfigJson.firestoreDatabaseId,
+  apiKey: isJsonValid ? firebaseConfigJson.apiKey : (import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigJson.apiKey),
+  authDomain: isJsonValid ? firebaseConfigJson.authDomain : (import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigJson.authDomain),
+  projectId: isJsonValid ? firebaseConfigJson.projectId : (import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigJson.projectId),
+  storageBucket: isJsonValid ? firebaseConfigJson.storageBucket : (import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigJson.storageBucket),
+  messagingSenderId: isJsonValid ? firebaseConfigJson.messagingSenderId : (import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJson.messagingSenderId),
+  appId: isJsonValid ? firebaseConfigJson.appId : (import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigJson.appId),
+  firestoreDatabaseId: isJsonValid ? firebaseConfigJson.firestoreDatabaseId : (import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || firebaseConfigJson.firestoreDatabaseId),
 };
+
+console.log("[Firebase Config] Active Project ID initialized:", firebaseConfig.projectId);
 
 const isConfigured = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== "dummy-api-key-for-build";
 
@@ -22,7 +27,8 @@ const app = initializeApp(firebaseConfig);
 
 // CRITICAL: Disable browser storage persistence and enforce memoryLocalCache for 100% online real-time database operations
 export const db = initializeFirestore(app, {
-  localCache: memoryLocalCache()
+  localCache: memoryLocalCache(),
+  ...(firebaseConfig.firestoreDatabaseId ? { databaseId: firebaseConfig.firestoreDatabaseId } : {})
 });
 
 export const auth = getAuth(app);

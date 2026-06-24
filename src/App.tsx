@@ -108,37 +108,42 @@ export default function App() {
     try {
       try {
         const p = await fetchProfile();
-        setProfile(p || null);
+        setProfile(p ? { ...DEFAULT_PROFILE, ...p } : DEFAULT_PROFILE);
       } catch (err) {
         console.error("Error loading profile:", err);
+        setProfile(DEFAULT_PROFILE);
       }
 
       try {
         const s = await fetchSkills();
-        setSkills(s || []);
+        setSkills(s && s.length > 0 ? s : DEFAULT_SKILLS);
       } catch (err) {
         console.error("Error loading skills:", err);
+        setSkills(DEFAULT_SKILLS);
       }
 
       try {
         const pr = await fetchProjects();
-        setProjects(pr || []);
+        setProjects(pr && pr.length > 0 ? pr : DEFAULT_PROJECTS);
       } catch (err) {
         console.error("Error loading projects:", err);
+        setProjects(DEFAULT_PROJECTS);
       }
 
       try {
         const ph = await fetchPhotographyItems();
-        setPhotographyList(ph || []);
+        setPhotographyList(ph && ph.length > 0 ? ph : DEFAULT_PHOTOGRAPHY);
       } catch (err) {
         console.error("Error loading photography items:", err);
+        setPhotographyList(DEFAULT_PHOTOGRAPHY);
       }
 
       try {
         const c = await fetchContact();
-        setContact(c || null);
+        setContact(c ? { ...DEFAULT_CONTACT, ...c } : DEFAULT_CONTACT);
       } catch (err) {
         console.error("Error loading contact:", err);
+        setContact(DEFAULT_CONTACT);
       }
     } catch (err) {
       console.error("Critical error in public state loading:", err);
@@ -177,7 +182,7 @@ export default function App() {
         try {
           unsubscribeProfile = onSnapshot(doc(db, 'profile', 'main'), (docSnap) => {
             if (docSnap.exists()) {
-              setProfile(docSnap.data() as Profile);
+              setProfile({ ...DEFAULT_PROFILE, ...docSnap.data() as Profile });
             }
           }, (error) => {
             console.warn("Real-time profile listener status:", error);
@@ -237,7 +242,7 @@ export default function App() {
         try {
           unsubscribeContact = onSnapshot(doc(db, 'contacts', 'main'), (docSnap) => {
             if (docSnap.exists()) {
-              setContact(docSnap.data() as Contact);
+              setContact({ ...DEFAULT_CONTACT, ...docSnap.data() as Contact });
             }
           }, (error) => {
             console.warn("Real-time contact listener status:", error);
