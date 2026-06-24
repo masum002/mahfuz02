@@ -166,117 +166,89 @@ export default function App() {
     let unsubscribePhotography: (() => void) | null = null;
     let unsubscribeContact: (() => void) | null = null;
 
-    if (isConfigured) {
-      console.log("👉 Establishing active real-time Firebase connection...");
-      
-      // 1. Profile real-time listener
-      try {
-        unsubscribeProfile = onSnapshot(doc(db, 'profile', 'main'), (docSnap) => {
-          if (docSnap.exists()) {
-            setProfile(docSnap.data() as Profile);
-          } else {
-            setProfile(DEFAULT_PROFILE);
-          }
-        }, (error) => {
-          console.warn("Real-time profile listener failed, falling back to static fetch:", error);
-          fetchProfile().then(p => setProfile(p || DEFAULT_PROFILE));
-        });
-      } catch (e) {
-        console.warn("Could not bind profile listener:", e);
-        fetchProfile().then(p => setProfile(p || DEFAULT_PROFILE));
-      }
+    const initData = async () => {
+      // 1. Securely fetch initial data first (from Firestore or beautiful local defaults if empty/timeout/offline)
+      await loadPortfolioData();
 
-      // 2. Skills real-time listener
-      try {
-        unsubscribeSkills = onSnapshot(collection(db, 'skills'), (snapshot) => {
-          const list: Skill[] = [];
-          snapshot.forEach((doc) => {
-            list.push({ id: doc.id, ...doc.data() } as Skill);
+      // 2. Establish active real-time listeners for live updates if Firebase is configured
+      if (isConfigured) {
+        console.log("👉 Establishing active real-time Firebase connection...");
+        
+        try {
+          unsubscribeProfile = onSnapshot(doc(db, 'profile', 'main'), (docSnap) => {
+            if (docSnap.exists()) {
+              setProfile(docSnap.data() as Profile);
+            }
+          }, (error) => {
+            console.warn("Real-time profile listener status:", error);
           });
-          if (list.length > 0) {
-            setSkills(list);
-          } else {
-            setSkills(DEFAULT_SKILLS);
-          }
-        }, (error) => {
-          console.warn("Real-time skills listener failed:", error);
-          fetchSkills().then(s => setSkills(s || DEFAULT_SKILLS));
-        });
-      } catch (e) {
-        console.warn("Could not bind skills listener:", e);
-        fetchSkills().then(s => setSkills(s || DEFAULT_SKILLS));
-      }
+        } catch (e) {
+          console.warn("Could not bind profile listener:", e);
+        }
 
-      // 3. Projects real-time listener
-      try {
-        unsubscribeProjects = onSnapshot(collection(db, 'projects'), (snapshot) => {
-          const list: Project[] = [];
-          snapshot.forEach((doc) => {
-            list.push({ id: doc.id, ...doc.data() } as Project);
+        try {
+          unsubscribeSkills = onSnapshot(collection(db, 'skills'), (snapshot) => {
+            const list: Skill[] = [];
+            snapshot.forEach((doc) => {
+              list.push({ id: doc.id, ...doc.data() } as Skill);
+            });
+            if (list.length > 0) {
+              setSkills(list);
+            }
+          }, (error) => {
+            console.warn("Real-time skills listener status:", error);
           });
-          if (list.length > 0) {
-            setProjects(list);
-          } else {
-            setProjects(DEFAULT_PROJECTS);
-          }
-        }, (error) => {
-          console.warn("Real-time projects listener failed:", error);
-          fetchProjects().then(pr => setProjects(pr || DEFAULT_PROJECTS));
-        });
-      } catch (e) {
-        console.warn("Could not bind projects listener:", e);
-        fetchProjects().then(pr => setProjects(pr || DEFAULT_PROJECTS));
-      }
+        } catch (e) {
+          console.warn("Could not bind skills listener:", e);
+        }
 
-      // 4. Photography real-time listener
-      try {
-        unsubscribePhotography = onSnapshot(collection(db, 'photography'), (snapshot) => {
-          const list: PhotographyItem[] = [];
-          snapshot.forEach((doc) => {
-            list.push({ id: doc.id, ...doc.data() } as PhotographyItem);
+        try {
+          unsubscribeProjects = onSnapshot(collection(db, 'projects'), (snapshot) => {
+            const list: Project[] = [];
+            snapshot.forEach((doc) => {
+              list.push({ id: doc.id, ...doc.data() } as Project);
+            });
+            if (list.length > 0) {
+              setProjects(list);
+            }
+          }, (error) => {
+            console.warn("Real-time projects listener status:", error);
           });
-          if (list.length > 0) {
-            setPhotographyList(list);
-          } else {
-            setPhotographyList(DEFAULT_PHOTOGRAPHY);
-          }
-        }, (error) => {
-          console.warn("Real-time photography listener failed:", error);
-          fetchPhotographyItems().then(ph => setPhotographyList(ph || DEFAULT_PHOTOGRAPHY));
-        });
-      } catch (e) {
-        console.warn("Could not bind photography listener:", e);
-        fetchPhotographyItems().then(ph => setPhotographyList(ph || DEFAULT_PHOTOGRAPHY));
+        } catch (e) {
+          console.warn("Could not bind projects listener:", e);
+        }
+
+        try {
+          unsubscribePhotography = onSnapshot(collection(db, 'photography'), (snapshot) => {
+            const list: PhotographyItem[] = [];
+            snapshot.forEach((doc) => {
+              list.push({ id: doc.id, ...doc.data() } as PhotographyItem);
+            });
+            if (list.length > 0) {
+              setPhotographyList(list.sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+            }
+          }, (error) => {
+            console.warn("Real-time photography listener status:", error);
+          });
+        } catch (e) {
+          console.warn("Could not bind photography listener:", e);
+        }
+
+        try {
+          unsubscribeContact = onSnapshot(doc(db, 'contacts', 'main'), (docSnap) => {
+            if (docSnap.exists()) {
+              setContact(docSnap.data() as Contact);
+            }
+          }, (error) => {
+            console.warn("Real-time contact listener status:", error);
+          });
+        } catch (e) {
+          console.warn("Could not bind contact listener:", e);
+        }
       }
+    };
 
-      // 5. Contact real-time listener
-      try {
-        unsubscribeContact = onSnapshot(doc(db, 'contacts', 'main'), (docSnap) => {
-          if (docSnap.exists()) {
-            setContact(docSnap.data() as Contact);
-          } else {
-            setContact(DEFAULT_CONTACT);
-          }
-        }, (error) => {
-          console.warn("Real-time contact listener failed:", error);
-          fetchContact().then(c => setContact(c || DEFAULT_CONTACT));
-        });
-      } catch (e) {
-        console.warn("Could not bind contact listener:", e);
-        fetchContact().then(c => setContact(c || DEFAULT_CONTACT));
-      }
-
-      // Automatically un-trigger loading spinner
-      setLoading(false);
-    } else {
-      console.log("ℹ️ Firebase is not configured. Running in high-performance local/fallback mode.");
-      loadPortfolioData();
-    }
-
-    // Safety fallback timeout to prevent infinite loading screen (e.g. offline or pending firestore database)
-    const safetyTimeout = setTimeout(() => {
-      setLoading(false);
-    }, 3000);
+    initData();
 
     // Scroll effect listener for glassy Nav Header
     const handleScroll = () => {
@@ -290,7 +262,6 @@ export default function App() {
     window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      clearTimeout(safetyTimeout);
       if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeSkills) unsubscribeSkills();
       if (unsubscribeProjects) unsubscribeProjects();
