@@ -294,6 +294,36 @@ export default function App() {
     setMobileMenuOpen(false); // Close mobile navigation if open
   }, [currentTab, currentView]);
 
+  // Dynamic SEO Page Title Manager
+  useEffect(() => {
+    let title = "Mahfuz R Masum | Lead Full-Stack & Cloud Engineer | Professional Portfolio";
+
+    if (currentView === 'project-detail' && activeProjectId) {
+      const matchedProject = projects.find((p, idx) => p.id === activeProjectId || String(idx) === activeProjectId);
+      if (matchedProject) {
+        title = `${matchedProject.title} | Projects - Mahfuz R Masum`;
+      } else {
+        title = "Project Details | Mahfuz R Masum";
+      }
+    } else if (currentView === 'photography-detail' && activePhotoId) {
+      const matchedPhoto = photographyList.find((p, idx) => p.id === activePhotoId || String(idx) === activePhotoId);
+      if (matchedPhoto) {
+        title = `${matchedPhoto.title} | Photography Exhibition - Mahfuz R Masum`;
+      } else {
+        title = "Photography Capture | Mahfuz R Masum";
+      }
+    } else if (currentView === 'admin') {
+      title = "Admin Panel | Portfolio Control Center - Mahfuz R Masum";
+    } else if (currentView === 'portfolio') {
+      const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+      if (currentTab !== 'home') {
+        title = `${capitalize(currentTab)} | Mahfuz R Masum - Lead Full-Stack & Cloud Engineer`;
+      }
+    }
+
+    document.title = title;
+  }, [currentView, currentTab, activeProjectId, activePhotoId, projects, photographyList]);
+
   // High speed multi-page URL hash listener
   useEffect(() => {
     const handleHashChange = () => {
