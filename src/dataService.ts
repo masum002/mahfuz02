@@ -371,20 +371,25 @@ let isSeedingCompleted = false;
 export async function isDatabaseSeeded(): Promise<boolean> {
   if (!isConfigured) return false;
   if (isSeedingCompleted) return true;
-  if (localStorage.getItem('portfolio_seeded') === 'true') {
-    isSeedingCompleted = true;
-    return true;
-  }
+  
+  const projectId = db.app.options.projectId || 'unknown_project';
+  const projectSpecificKey = `portfolio_seeded_${projectId}`;
+
   try {
     const docRef = doc(db, 'metadata', 'seeded');
     const docSnap = await getDoc(docRef);
     if (docSnap.exists() && docSnap.data()?.seeded === true) {
       isSeedingCompleted = true;
-      localStorage.setItem('portfolio_seeded', 'true');
+      localStorage.setItem(projectSpecificKey, 'true');
       return true;
     }
   } catch (error) {
     console.warn("Error checking seeded state from Firestore:", error);
+  }
+
+  if (localStorage.getItem(projectSpecificKey) === 'true') {
+    isSeedingCompleted = true;
+    return true;
   }
   return false;
 }
@@ -393,6 +398,9 @@ export async function seedDatabase(): Promise<void> {
   if (!isConfigured) return;
   const seeded = await isDatabaseSeeded();
   if (seeded) return;
+
+  const projectId = db.app.options.projectId || 'unknown_project';
+  const projectSpecificKey = `portfolio_seeded_${projectId}`;
 
   try {
     console.log("Seeding Firestore database with default portfolio data...");
@@ -443,7 +451,7 @@ export async function seedDatabase(): Promise<void> {
     await setDoc(seedFlagRef, { seeded: true, timestamp: new Date().toISOString() });
     
     isSeedingCompleted = true;
-    localStorage.setItem('portfolio_seeded', 'true');
+    localStorage.setItem(projectSpecificKey, 'true');
     console.log("Firestore database seeding successfully completed.");
   } catch (error) {
     console.error("Firestore database seeding failed:", error);
