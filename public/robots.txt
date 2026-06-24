@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://mahfuz02.vercel.app/sitemap.xml
+Sitemap: https://mahfuz62.pro.bd/sitemap.xml
