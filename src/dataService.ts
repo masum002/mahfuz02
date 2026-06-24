@@ -38,7 +38,7 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 3000, label: st
 }
 
 // PROFILE SERVICE
-export async function fetchProfile(): Promise<Profile> {
+export async function fetchProfile(fallbackToDefault: boolean = true): Promise<Profile> {
   const collectionName = 'profile';
   const docId = 'main';
   try {
@@ -46,14 +46,20 @@ export async function fetchProfile(): Promise<Profile> {
       return DEFAULT_PROFILE;
     }
     const docRef = doc(db, collectionName, docId);
-    const docSnap = await withTimeout(getDoc(docRef), 3000, "fetchProfile");
+    const docSnap = await withTimeout(getDoc(docRef), 10000, "fetchProfile");
     if (docSnap.exists()) {
       return docSnap.data() as Profile;
     }
-    return DEFAULT_PROFILE;
+    if (fallbackToDefault) {
+      return DEFAULT_PROFILE;
+    }
+    throw new Error("PROFILE_NOT_FOUND");
   } catch (error) {
-    console.warn("Firestore fetchProfile error, falling back to static default:", error);
-    return DEFAULT_PROFILE;
+    if (fallbackToDefault) {
+      console.warn("Firestore fetchProfile error, falling back to static default:", error);
+      return DEFAULT_PROFILE;
+    }
+    throw error;
   }
 }
 
@@ -77,14 +83,14 @@ export async function saveProfile(profile: Profile): Promise<void> {
 }
 
 // SKILLS SERVICE
-export async function fetchSkills(): Promise<Skill[]> {
+export async function fetchSkills(fallbackToDefault: boolean = true): Promise<Skill[]> {
   const collectionName = 'skills';
   try {
     if (!isConfigured) {
       return DEFAULT_SKILLS;
     }
     const q = query(collection(db, collectionName));
-    const querySnapshot = await withTimeout(getDocs(q), 3000, "fetchSkills");
+    const querySnapshot = await withTimeout(getDocs(q), 10000, "fetchSkills");
     const fetchedSkills: Skill[] = [];
     querySnapshot.forEach((doc) => {
       fetchedSkills.push({ id: doc.id, ...doc.data() } as Skill);
@@ -93,14 +99,21 @@ export async function fetchSkills(): Promise<Skill[]> {
     if (fetchedSkills.length > 0) {
       return fetchedSkills;
     }
-    const seeded = await isDatabaseSeeded();
-    if (seeded) {
-      return [];
+    
+    if (fallbackToDefault) {
+      const seeded = await isDatabaseSeeded();
+      if (seeded) {
+        return [];
+      }
+      return DEFAULT_SKILLS;
     }
-    return DEFAULT_SKILLS;
+    return [];
   } catch (error) {
-    console.warn("Firestore fetchSkills error, falling back to static default:", error);
-    return DEFAULT_SKILLS;
+    if (fallbackToDefault) {
+      console.warn("Firestore fetchSkills error, falling back to static default:", error);
+      return DEFAULT_SKILLS;
+    }
+    throw error;
   }
 }
 
@@ -153,14 +166,14 @@ export async function deleteSkill(id: string): Promise<void> {
 }
 
 // PROJECTS SERVICE
-export async function fetchProjects(): Promise<Project[]> {
+export async function fetchProjects(fallbackToDefault: boolean = true): Promise<Project[]> {
   const collectionName = 'projects';
   try {
     if (!isConfigured) {
       return DEFAULT_PROJECTS;
     }
     const q = query(collection(db, collectionName));
-    const querySnapshot = await withTimeout(getDocs(q), 3000, "fetchProjects");
+    const querySnapshot = await withTimeout(getDocs(q), 10000, "fetchProjects");
     const fetchedProjects: Project[] = [];
     querySnapshot.forEach((doc) => {
       fetchedProjects.push({ id: doc.id, ...doc.data() } as Project);
@@ -169,14 +182,21 @@ export async function fetchProjects(): Promise<Project[]> {
     if (fetchedProjects.length > 0) {
       return fetchedProjects;
     }
-    const seeded = await isDatabaseSeeded();
-    if (seeded) {
-      return [];
+    
+    if (fallbackToDefault) {
+      const seeded = await isDatabaseSeeded();
+      if (seeded) {
+        return [];
+      }
+      return DEFAULT_PROJECTS;
     }
-    return DEFAULT_PROJECTS;
+    return [];
   } catch (error) {
-    console.warn("Firestore fetchProjects error, falling back to static default:", error);
-    return DEFAULT_PROJECTS;
+    if (fallbackToDefault) {
+      console.warn("Firestore fetchProjects error, falling back to static default:", error);
+      return DEFAULT_PROJECTS;
+    }
+    throw error;
   }
 }
 
@@ -229,7 +249,7 @@ export async function deleteProject(id: string): Promise<void> {
 }
 
 // CONTACT SERVICE
-export async function fetchContact(): Promise<Contact> {
+export async function fetchContact(fallbackToDefault: boolean = true): Promise<Contact> {
   const collectionName = 'contacts';
   const docId = 'main';
   try {
@@ -237,14 +257,20 @@ export async function fetchContact(): Promise<Contact> {
       return DEFAULT_CONTACT;
     }
     const docRef = doc(db, collectionName, docId);
-    const docSnap = await withTimeout(getDoc(docRef), 3000, "fetchContact");
+    const docSnap = await withTimeout(getDoc(docRef), 10000, "fetchContact");
     if (docSnap.exists()) {
       return docSnap.data() as Contact;
     }
-    return DEFAULT_CONTACT;
+    if (fallbackToDefault) {
+      return DEFAULT_CONTACT;
+    }
+    throw new Error("CONTACT_NOT_FOUND");
   } catch (error) {
-    console.warn("Firestore fetchContact error, falling back to static default:", error);
-    return DEFAULT_CONTACT;
+    if (fallbackToDefault) {
+      console.warn("Firestore fetchContact error, falling back to static default:", error);
+      return DEFAULT_CONTACT;
+    }
+    throw error;
   }
 }
 
@@ -290,14 +316,14 @@ export async function uploadImage(file: File, folder: string): Promise<string> {
 }
 
 // PHOTOGRAPHY SERVICE
-export async function fetchPhotographyItems(): Promise<PhotographyItem[]> {
+export async function fetchPhotographyItems(fallbackToDefault: boolean = true): Promise<PhotographyItem[]> {
   const collectionName = 'photography';
   try {
     if (!isConfigured) {
       return DEFAULT_PHOTOGRAPHY;
     }
     const q = query(collection(db, collectionName));
-    const querySnapshot = await withTimeout(getDocs(q), 3000, "fetchPhotographyItems");
+    const querySnapshot = await withTimeout(getDocs(q), 10000, "fetchPhotographyItems");
     const fetchedItems: PhotographyItem[] = [];
     querySnapshot.forEach((doc) => {
       fetchedItems.push({ id: doc.id, ...doc.data() } as PhotographyItem);
@@ -306,14 +332,21 @@ export async function fetchPhotographyItems(): Promise<PhotographyItem[]> {
     if (fetchedItems.length > 0) {
       return fetchedItems.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     }
-    const seeded = await isDatabaseSeeded();
-    if (seeded) {
-      return [];
+    
+    if (fallbackToDefault) {
+      const seeded = await isDatabaseSeeded();
+      if (seeded) {
+        return [];
+      }
+      return DEFAULT_PHOTOGRAPHY;
     }
-    return DEFAULT_PHOTOGRAPHY;
+    return [];
   } catch (error) {
-    console.warn("Firestore fetchPhotographyItems error, falling back to static default:", error);
-    return DEFAULT_PHOTOGRAPHY;
+    if (fallbackToDefault) {
+      console.warn("Firestore fetchPhotographyItems error, falling back to static default:", error);
+      return DEFAULT_PHOTOGRAPHY;
+    }
+    throw error;
   }
 }
 
@@ -392,7 +425,8 @@ export async function isDatabaseSeeded(): Promise<boolean> {
       return true;
     }
   } catch (error) {
-    console.warn("Error checking seeded state from Firestore:", error);
+    console.warn("Error checking seeded state from Firestore. Assuming true to prevent overwrite:", error);
+    return true; // Safe fallback: assume seeded to prevent overwrites on timeout or error
   }
 
   // 3. Prevent overwriting: If profile document already exists in Firestore, the DB is already seeded or configured!
@@ -414,7 +448,8 @@ export async function isDatabaseSeeded(): Promise<boolean> {
       return true;
     }
   } catch (error) {
-    console.warn("Error checking existing profile document presence in Firestore:", error);
+    console.warn("Error checking existing profile document presence in Firestore. Assuming true to prevent overwrite:", error);
+    return true; // Safe fallback: assume seeded to prevent overwrites on timeout or error
   }
 
   return false;
@@ -429,10 +464,19 @@ export async function seedDatabase(): Promise<void> {
   const projectSpecificKey = `portfolio_seeded_${projectId}`;
 
   try {
+    // Double-check profile presence right before seeding to prevent overwriting under any racing condition
+    const profileRef = doc(db, 'profile', 'main');
+    const profileSnap = await getDoc(profileRef);
+    if (profileSnap.exists()) {
+      console.log("⚠️ Aborting seed: Profile document already exists in Firestore.");
+      isSeedingCompleted = true;
+      localStorage.setItem(projectSpecificKey, 'true');
+      return;
+    }
+
     console.log("Seeding Firestore database with default portfolio data...");
     
     // 1. Profile document
-    const profileRef = doc(db, 'profile', 'main');
     await setDoc(profileRef, DEFAULT_PROFILE);
 
     // 2. Contacts document

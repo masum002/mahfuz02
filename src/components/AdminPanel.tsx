@@ -175,47 +175,62 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   };
 
   const loadAllMetricsData = async () => {
-    try {
-      if (isConfigured) {
-        await seedDatabase();
-      }
-    } catch (seedErr) {
-      console.error("Database seeding check failure:", seedErr);
-    }
+    if (!isConfigured) return;
 
     try {
-      const p = await fetchProfile();
+      // 1. Fetch profile with fallbackToDefault=false to see if it exists
+      const p = await fetchProfile(false);
       setProfileForm(p);
-    } catch (err) {
-      console.error("Error fetching profile dataset:", err);
+    } catch (err: any) {
+      if (err instanceof Error && err.message === "PROFILE_NOT_FOUND") {
+        // Genuinely empty Firestore DB -> seed it with defaults!
+        console.log("No profile document found. Seeding the database with defaults...");
+        try {
+          await seedDatabase();
+          const seededProfile = await fetchProfile(false);
+          setProfileForm(seededProfile);
+        } catch (seedErr) {
+          console.error("Failed to seed database:", seedErr);
+          showStatus("Database seeding failed on startup.", "danger");
+        }
+      } else {
+        console.error("Error fetching profile dataset from Firestore:", err);
+        showStatus("⚠️ Error: Connection timeout or Firestore read failure. Custom data was NOT loaded to prevent accidental overwrite. Please reload the page or check your connection.", "danger");
+        return; // Abort loading further metrics to prevent overwriting with defaults
+      }
     }
 
+    // 2. Fetch other datasets with fallbackToDefault=false
     try {
-      const s = await fetchSkills();
+      const s = await fetchSkills(false);
       setSkillsList(s);
     } catch (err) {
       console.error("Error fetching skills dataset:", err);
     }
 
     try {
-      const pr = await fetchProjects();
+      const pr = await fetchProjects(false);
       setProjectsList(pr);
     } catch (err) {
       console.error("Error fetching projects dataset:", err);
     }
 
     try {
-      const ph = await fetchPhotographyItems();
+      const ph = await fetchPhotographyItems(false);
       setPhotographyList(ph);
     } catch (err) {
       console.error("Error fetching photography dataset:", err);
     }
 
     try {
-      const c = await fetchContact();
+      const c = await fetchContact(false);
       setContactForm(c);
-    } catch (err) {
-      console.error("Error fetching contact dataset:", err);
+    } catch (err: any) {
+      if (err instanceof Error && err.message === "CONTACT_NOT_FOUND") {
+        // Safe to ignore or wait for seed
+      } else {
+        console.error("Error fetching contact dataset:", err);
+      }
     }
   };
 
