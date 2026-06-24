@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import { initializeFirestore, memoryLocalCache, doc, getDocFromServer } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfigJson from '../firebase-applet-config.json';
 
@@ -19,8 +19,12 @@ const firebaseConfig = {
 const isConfigured = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== "dummy-api-key-for-build";
 
 const app = initializeApp(firebaseConfig);
-// CRITICAL: Must connect to the designated database instance (especially for Enterprise projects or custom IDs in AI Studio)
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || undefined);
+
+// CRITICAL: Disable browser storage persistence and enforce memoryLocalCache for 100% online real-time database operations
+export const db = initializeFirestore(app, {
+  localCache: memoryLocalCache()
+});
+
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
@@ -47,8 +51,8 @@ export async function testConnection() {
     );
     if (isOfflineMsg) {
       console.log("ℹ️ [Firebase Connection Status]: the client is offline or database is not yet initialized.");
-      console.log("👉 Troubleshooting steps for custom Firebase project 'mahfuz002-b0b26':");
-      console.log("1. Go to Firebase Console: https://console.firebase.google.com/project/mahfuz002-b0b26/firestore");
+      console.log(`👉 Troubleshooting steps for custom Firebase project '${firebaseConfig.projectId}':`);
+      console.log(`1. Go to Firebase Console: https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore`);
       console.log("2. Click on 'Create Database' and select your preferred location/region (e.g. Standard/Enterprise mode).");
       console.log("3. Select 'Test Mode' or 'Production Mode' (rules can be deployed from this project using deploy_firebase).");
       console.log("Once created, standard data mutations will automatically start syncing with your remote database.");

@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  updatePassword,
+  signInWithPopup,
   signOut, 
   onAuthStateChanged, 
   User as FirebaseUser 
 } from 'firebase/auth';
 import { 
   auth, 
+  googleProvider,
   isConfigured
 } from '../firebase';
 import { 
@@ -24,7 +23,6 @@ import {
   deleteProject, 
   fetchContact, 
   saveContact, 
-  uploadImage,
   fetchPhotographyItems,
   addPhotographyItem,
   updatePhotographyItem,
@@ -59,18 +57,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'skills' | 'projects' | 'photography' | 'contact' | 'security'>('profile');
-
-  // Custom secure login state variables
-  const [emailInput, setEmailInput] = useState('mahfujar003@gmail.com');
-  const [passwordInput, setPasswordInput] = useState('');
-  const [registerMode, setRegisterMode] = useState(false);
-  const [showHelpConfig, setShowHelpConfig] = useState(false);
-
-  // Security: password update states
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [isUpdatingPass, setIsUpdatingPass] = useState(false);
+  const [activeTab, setActiveTab] = useState<'profile' | 'skills' | 'projects' | 'photography' | 'contact'>('profile');
 
   // Unified status banner messages
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'danger' } | null>(null);
@@ -118,29 +105,23 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const [photoForm, setPhotoForm] = useState<{ id?: string; title: string; description: string; imageUrl: string; cameraSettings: string; location: string }>({ title: '', description: '', imageUrl: '', cameraSettings: '', location: '' });
   const [isEditingPhoto, setIsEditingPhoto] = useState(false);
 
-  // File loading states
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [isUploadingCvPhoto, setIsUploadingCvPhoto] = useState(false);
-  const [isUploadingCvSignature, setIsUploadingCvSignature] = useState(false);
-  const [isUploadingProjImg, setIsUploadingProjImg] = useState(false);
-  const [isUploadingPhotoImg, setIsUploadingPhotoImg] = useState(false);
-
   // Whitelisted Emails defined inside specification & bootstrapped user runtime email
-  const ALLOWED_EMAILS = ['mahfujar003@gmail.com', 'your-actual-gmail@gmail.com'];
+  const ALLOWED_EMAILS = ['mahfujar003@gmail.com'];
 
   // Auth Status Monitor
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
+        const email = currentUser.email?.trim().toLowerCase();
         // Strict Email Lock Verification
-        if (currentUser.email && ALLOWED_EMAILS.includes(currentUser.email)) {
+        if (email && ALLOWED_EMAILS.includes(email)) {
           setUser(currentUser);
           setAuthError(null);
           // Pre-load all metrics
           loadAllMetricsData();
         } else {
           // Unauthorized email -> immediately sign out
-          setAuthError(`Access Denied: The account "${currentUser.email}" is not authorized. Please log in with an approved administrator address.`);
+          setAuthError(`অ্যাক্সেস রিফিউজড: "${currentUser.email}" অ্যাডমিন ইমেইল হিসেবে অনুমোদিত নয়। শুধুমাত্র ${ALLOWED_EMAILS[0]} এডমিন প্যানেলে অ্যাক্সেস পাবেন।`);
           setUser(null);
           await signOut(auth);
         }
@@ -153,64 +134,27 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     return () => unsubscribe();
   }, []);
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!emailInput || !passwordInput) {
-      setAuthError("ইমেইল এবং পাসওয়ার্ড দুটিই দিন।");
-      return;
-    }
-
-    const cleanEmail = emailInput.trim().toLowerCase();
-    const cleanWhitelisted = ALLOWED_EMAILS.map(email => email.trim().toLowerCase());
-
-    if (!cleanWhitelisted.includes(cleanEmail)) {
-      setAuthError(`অ্যাক্সেস রিফিউজড: "${cleanEmail}" অ্যাডমিন ইমেইল হিসেবে অনুমোদিত নয়। শুধুমাত্র অনুমোদিত ইমেইল দিয়ে সাইন-ইন করতে পারেন।`);
-      return;
-    }
-
+  const handleGoogleAuth = async () => {
     setAuthLoading(true);
     setAuthError(null);
-
-    // Standard Login flow using pure real-time Firebase Auth
     try {
-      if (registerMode) {
-        await createUserWithEmailAndPassword(auth, cleanEmail, passwordInput);
-        showStatus("অ্যাডমিন অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে এবং আপনি সাইন-ইন করেছেন!", "success");
-      } else {
-        try {
-          await signInWithEmailAndPassword(auth, cleanEmail, passwordInput);
-          showStatus("সফলভাবে অ্যাডমিন সাইন-ইন সম্পূর্ণ হয়েছে।", "success");
-        } catch (signInErr: any) {
-          // Auto-registration fallback for empty Firebase/fresh databases
-          if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/user-disabled') {
-            try {
-              await createUserWithEmailAndPassword(auth, cleanEmail, passwordInput);
-              showStatus("আপনার অ্যাকাউন্ট প্রথমবার ব্যবহারের জন্য স্বয়ংক্রিয়ভাবে তৈরি হয়েছে এবং সাইন-ইন সম্পূর্ণ হয়েছে!", "success");
-            } catch (createErr: any) {
-              if (createErr.code === 'auth/email-already-in-use') {
-                throw new Error("ভুল পাসওয়ার্ড। অনুগ্রহ করে আপনার সঠিক পাসওয়ার্ডটি দিয়ে পুনরায় চেষ্টা করুন।");
-              } else {
-                throw createErr;
-              }
-            }
-          } else {
-            throw signInErr;
-          }
-        }
+      if (!isConfigured) {
+        throw new Error("ফায়ারবেস কনফিগার করা হয়নি। অনুগ্রহ করে আপনার firebase-applet-config.json ফাইলটি চেক করুন।");
       }
+      await signInWithPopup(auth, googleProvider);
+      showStatus("সফলভাবে গুগল লগইন সম্পূর্ণ হয়েছে।", "success");
     } catch (err: any) {
-      console.error("Auth Failure Error:", err);
-      let errorMsg = err.message || "একটি ত্রুটি ঘটেছে।";
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        errorMsg = "ভুল ইমেইল অথবা পাসওয়ার্ড। অনুগ্রহ করে চেক করে পুনরায় চেষ্টা করুন অথবা অ্যাকাউন্ট না থাকলে ইমেইল ও পাসওয়ার্ড দিয়ে 'সাইন-ইন' বাটনে ক্লিক করুন।";
-      } else if (err.code === 'auth/weak-password') {
-        errorMsg = "পাসওয়ার্ডটি অত্যন্ত দুর্বল। পাসওয়ার্ড কমপক্ষে ৬ ক্যারেক্টার হওয়া বাঞ্ছনীয়।";
-      } else if (err.code === 'auth/email-already-in-use') {
-        errorMsg = "এই ইমেইলটি ইতিপূর্বে ব্যবহার করা হয়েছে। অনুগ্রহ করে সঠিক পাসওয়ার্ড দিয়ে লগইন করুন।";
-      } else if (err.code === 'auth/invalid-email') {
-        errorMsg = "ইমেল ফর্ম্যাট অকার্যকর বা ভুল।";
+      console.error("Google Auth Failure Error:", err);
+      let errorMsg = err.message || "গুগল সাইন-ইন করতে একটি ত্রুটি ঘটেছে।";
+      if (err.code === 'auth/popup-closed-by-user') {
+        errorMsg = "লগইন পপআপটি বন্ধ করা হয়েছে। দয়া করে আবার চেষ্টা করুন।";
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        errorMsg = "লগইন রিকোয়েস্টটি বাতিল করা হয়েছে।";
+      } else if (err.code === 'auth/unauthorized-domain') {
+        errorMsg = "এই ডোমেইনটি ফায়ারবেস কনসোলে অথেনটিকেশন ডোমেইন হিসেবে অনুমোদিত নয়। অনুগ্রহ করে ফায়ারবেস কনসোলে Authorized Domains-এ এই ডোমেইনটি যুক্ত করুন।";
       }
       setAuthError(errorMsg);
+    } finally {
       setAuthLoading(false);
     }
   };
@@ -219,47 +163,10 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     try {
       await signOut(auth);
       setUser(null);
-      showStatus("Logged out successfully.", "success");
+      showStatus("সফলভাবে সাইন-আউট করা হয়েছে।", "success");
     } catch (err) {
       console.error("Logout failure:", err);
       setUser(null);
-    }
-  };
-
-  const handlePasswordChangeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPassword || !confirmNewPassword) {
-      showStatus("দয়া করে পাসওয়ার্ড দিন।", "danger");
-      return;
-    }
-    if (newPassword.length < 6) {
-      showStatus("পাসওয়ার্ড কমপক্ষে ৬ ক্যারেক্টার হওয়া বাঞ্ছনীয়।", "danger");
-      return;
-    }
-    if (newPassword !== confirmNewPassword) {
-      showStatus("দুটি পাসওয়ার্ড মেলেনি। আবার চেষ্টা করুন।", "danger");
-      return;
-    }
-
-    setIsUpdatingPass(true);
-    try {
-      if (auth.currentUser) {
-        await updatePassword(auth.currentUser, newPassword);
-        showStatus("আপনার অ্যাডমিন পাসওয়ার্ড সফলভাবে ও নিরাপদে আপডেট করা হয়েছে!", "success");
-        setNewPassword('');
-        setConfirmNewPassword('');
-      } else {
-        showStatus("কোনো লগইন করা ইউজার পাওয়া যায়নি। দয়া করে আবার লগইন করুন।", "danger");
-      }
-    } catch (err: any) {
-      console.error("Password update error:", err);
-      let errorMsg = err.message || "পাসওয়ার্ড আপডেট করা যায়নি।";
-      if (err.code === 'auth/requires-recent-login') {
-        errorMsg = "নিরাপত্তার স্বার্থে পাসওয়ার্ড পরিবর্তনের জন্য আপনাকে অতি সম্প্রতি লগইন করতে হবে। দয়া করে একবার লগআউট করে আবার লগইন করুন, এরপর পাসওয়ার্ড পরিবর্তন করুন।";
-      }
-      showStatus(errorMsg, "danger");
-    } finally {
-      setIsUpdatingPass(false);
     }
   };
 
@@ -306,52 +213,6 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
       setIsSaving(false);
     }
   };
-
-  const handleAvatarFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingAvatar(true);
-    try {
-      const url = await uploadImage(file, 'avatars');
-      setProfileForm(prev => ({ ...prev, avatarUrl: url }));
-      showStatus("Avatar uploaded successfully.", "success");
-    } catch (err) {
-      showStatus("Avatar document upload failed.", "danger");
-    } finally {
-      setIsUploadingAvatar(false);
-    }
-  };
-
-  const handleCvPhotoFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingCvPhoto(true);
-    try {
-      const url = await uploadImage(file, 'cvPhotos');
-      setProfileForm(prev => ({ ...prev, cvPhotoUrl: url }));
-      showStatus("CV Photograph uploaded successfully.", "success");
-    } catch (err) {
-      showStatus("CV Photograph upload failed.", "danger");
-    } finally {
-      setIsUploadingCvPhoto(false);
-    }
-  };
-
-  const handleCvSignatureFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingCvSignature(true);
-    try {
-      const url = await uploadImage(file, 'cvSignatures');
-      setProfileForm(prev => ({ ...prev, cvSignatureUrl: url }));
-      showStatus("CV Digital Signature uploaded successfully.", "success");
-    } catch (err) {
-      showStatus("CV Digital Signature upload failed.", "danger");
-    } finally {
-      setIsUploadingCvSignature(false);
-    }
-  };
-
   // HANDLERS: SKILLS
   const handleSkillSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -450,21 +311,6 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     }
   };
 
-  const handleProjFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingProjImg(true);
-    try {
-      const url = await uploadImage(file, 'projects');
-      setProjectForm(prev => ({ ...prev, imageUrl: url }));
-      showStatus("Project preview image uploaded successfully.", "success");
-    } catch (err) {
-      showStatus("Visual upload failed. Base64 pipeline activated.", "success");
-    } finally {
-      setIsUploadingProjImg(false);
-    }
-  };
-
   const handleEditProject = (p: Project) => {
     setProjectForm({
       id: p.id,
@@ -529,21 +375,6 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
       showStatus(`Failed to store photograph in Firestore: ${errMsg}`, "danger");
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handlePhotoFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingPhotoImg(true);
-    try {
-      const url = await uploadImage(file, 'photography');
-      setPhotoForm(prev => ({ ...prev, imageUrl: url }));
-      showStatus("Photograph image uploaded.", "success");
-    } catch (err) {
-      showStatus("Storage pipeline offline. Offline Base64 bypass complete.", "success");
-    } finally {
-      setIsUploadingPhotoImg(false);
     }
   };
 
@@ -612,7 +443,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
               <Lock size={24} />
             </div>
             <h1 className="text-2xl font-sans font-extrabold text-white">Administrator Access Gate</h1>
-            <p className="text-slate-400 text-xs font-mono mt-2 uppercase tracking-widest text-slate-500">Secure Protocol Interface</p>
+            <p className="text-slate-400 text-xs font-mono mt-2 uppercase tracking-widest text-purple-400">Secure Google Sign-In</p>
           </div>
 
           {authError && (
@@ -622,65 +453,34 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
             </div>
           )}
 
-          <form onSubmit={handleEmailAuth} className="space-y-4">
-            <div className="p-4 bg-slate-950/60 rounded-2xl border border-slate-800/85 space-y-4">
-              <h4 className="text-xs font-mono text-slate-400 uppercase tracking-widest border-b border-slate-900 pb-2 flex items-center gap-1.5">
-                <Lock size={12} className="text-purple-400" />
-                <span>Secure Credentials (এডমিন অথেনটিকেশন):</span>
-              </h4>
-              
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">
-                  Admin Email (অ্যাডমিন ইমেইল)
-                </label>
-                <input
-                  type="email"
-                  value={emailInput}
-                  onChange={(e) => setEmailInput(e.target.value)}
-                  className="w-full bg-slate-900/60 border border-slate-800 focus:border-purple-500 p-3 rounded-xl text-slate-200 text-xs focus:outline-none transition-colors"
-                  placeholder="e.g., mahfujar003@gmail.com"
-                  required
-                />
+          <div className="space-y-4">
+            <div className="p-5 bg-slate-950/60 rounded-2xl border border-slate-800/85 space-y-3 text-center">
+              <p className="text-xs text-slate-300 font-sans">
+                অ্যাডমিন প্যানেলে শুধুমাত্র গুগল অথেনটিকেশন (Google Sign-In) ব্যবহার করে লগইন করা যাবে।
+              </p>
+              <div className="p-3 bg-purple-500/5 rounded-xl border border-purple-500/10 inline-block">
+                <p className="text-[11px] font-mono text-purple-300">
+                  Whitelisted Email: <span className="text-white font-semibold">mahfujar003@gmail.com</span>
+                </p>
               </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">
-                  Password (পাসওয়ার্ড)
-                </label>
-                <input
-                  type="password"
-                  value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  className="w-full bg-slate-900/60 border border-slate-800 focus:border-purple-500 p-3 rounded-xl text-slate-200 text-xs focus:outline-none transition-colors"
-                  placeholder="কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড"
-                  required
-                />
-              </div>
+              <p className="text-[10px] text-slate-500 font-sans">
+                (অন্য কোনো জিমেইল অ্যাড্রেস দিয়ে লগইন করলে অ্যাক্সেস দেওয়া হবে না)
+              </p>
             </div>
 
             <button
-              type="submit"
-              className="w-full py-4 px-6 bg-gradient-to-r from-purple-600/70 to-pink-600/70 hover:from-purple-500 hover:to-pink-500 text-white rounded-2xl font-semibold tracking-wide transition-all duration-300 shadow-lg shadow-purple-600/10 hover:shadow-purple-500/20 font-sans flex items-center justify-center gap-2"
+              onClick={handleGoogleAuth}
+              className="w-full py-4 px-6 bg-white hover:bg-slate-100 text-slate-900 rounded-2xl font-semibold tracking-wide transition-all duration-300 shadow-lg flex items-center justify-center gap-3 font-sans hover:scale-[1.01] active:scale-[0.99]"
             >
-              <Check size={16} />
-              <span>{registerMode ? "আমার নতুন অ্যাকাউন্ট তৈরি করুন" : "অ্যাডমিন প্যানেলে প্রবেশ করুন"}</span>
+              <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+              </svg>
+              <span>Continue with Google</span>
             </button>
-
-            <div className="text-center pt-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setRegisterMode(!registerMode);
-                  setAuthError(null);
-                }}
-                className="text-xs text-purple-400 hover:text-purple-300 underline underline-offset-4 transition-all"
-              >
-                {registerMode 
-                  ? "ইতিমধ্যে অ্যাকাউন্ট আছে? সাইন-ইন বা লগইন করুন" 
-                  : "নতুন ইউজার? আমার নতুন অ্যাকাউন্ট তৈরি করুন (Register instead)"}
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
       </div>
     );
@@ -784,21 +584,6 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                 Manage Contact
               </span>
               <ChevronRight size={12} className={activeTab === 'contact' ? 'opacity-100' : 'opacity-40'} />
-            </button>
-
-            <button
-              onClick={() => setActiveTab('security')}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-medium text-xs font-sans transition-all duration-300 ${
-                activeTab === 'security'
-                  ? 'bg-purple-600 text-white font-semibold'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <span className="flex items-center gap-2.5">
-                <Lock size={15} />
-                Security Settings (নিরাপত্তা)
-              </span>
-              <ChevronRight size={12} className={activeTab === 'security' ? 'opacity-100' : 'opacity-40'} />
             </button>
           </nav>
         </div>
@@ -943,45 +728,26 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
             <form onSubmit={handleProfileSave} className="bg-slate-900 border border-slate-800 rounded-2.5xl p-6 md:p-8 space-y-6">
               {/* Profile image picker block */}
               <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-800">
-                <div className="relative w-24 h-24 rounded-full p-0.5 bg-gradient-to-tr from-purple-500 to-pink-500 shadow-md">
+                <div className="relative w-24 h-24 rounded-full p-0.5 bg-gradient-to-tr from-purple-500 to-pink-500 shadow-md shrink-0">
                   <img
                     src={profileForm.avatarUrl || "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=600"}
                     alt="Preview"
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover rounded-full bg-slate-950 border-2 border-slate-950"
                   />
-                  {isUploadingAvatar && (
-                    <div className="absolute inset-0 bg-slate-950/80 rounded-full flex items-center justify-center">
-                      <span className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  )}
                 </div>
                 
-                <div className="space-y-3 text-center sm:text-left flex-1">
+                <div className="space-y-3 text-center sm:text-left flex-1 w-full">
                   <h4 className="text-sm font-sans font-bold text-white">Avatar Image (অবতার ছবি)</h4>
-                  <p className="text-xs text-slate-500 font-mono">JPG/PNG ফাইল আপলোড করুন অথবা সরাসরি ছবির লিংক ডানদিকের বক্সে পেস্ট করুন।</p>
+                  <p className="text-xs text-slate-500 font-mono">সরাসরি আপনার ছবি বা অবতারের লিংক নিচের বক্সে পেস্ট করুন।</p>
                   
-                  <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-                    <label className="inline-flex justify-center items-center gap-2 px-4 py-2 bg-slate-950 border border-slate-800 hover:bg-slate-800 hover:text-white rounded-xl text-xs font-sans font-medium text-slate-300 cursor-pointer transition-colors shrink-0">
-                      <Upload size={14} />
-                      {isUploadingAvatar ? "Processing Upload..." : "Upload Profile Photo"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleAvatarFileSelect}
-                        className="hidden"
-                        disabled={isUploadingAvatar}
-                      />
-                    </label>
-                    
-                    <span className="text-xs text-slate-600 hidden sm:inline">OR</span>
-                    
+                  <div className="flex items-center gap-3">
                     <input
                       type="text"
                       value={profileForm.avatarUrl || ''}
                       onChange={(e) => setProfileForm(prev => ({ ...prev, avatarUrl: e.target.value }))}
-                      className="flex-1 px-3.5 py-2 bg-slate-950 border border-slate-800 text-slate-200 rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
-                      placeholder="সরাসরি ছবির লিংক (Direct Image URL/Link) এখানে পেস্ট করুন"
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-slate-200 rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
+                      placeholder="সরাসরি ছবির লিংক (Direct Image URL/Link - যেমন: https://images.unsplash.com/...) এখানে পেস্ট করুন"
                     />
                   </div>
                 </div>
@@ -1148,58 +914,28 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                       />
                     </div>
 
-                    {/* CV Photo URL */}
+                     {/* CV Photo URL */}
                     <div className="space-y-1.5">
                       <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">CV Image / Photograph URL</label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={profileForm.cvPhotoUrl || ''}
-                          onChange={(e) => setProfileForm(prev => ({ ...prev, cvPhotoUrl: e.target.value }))}
-                          className="flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
-                          placeholder="Or upload select file →"
-                        />
-                        <label className="px-3 py-2 bg-slate-950 border border-slate-800 text-slate-300 hover:text-white rounded-xl hover:bg-slate-800 cursor-pointer flex items-center justify-center text-xs transition-colors relative">
-                          <Upload size={13} />
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleCvPhotoFileSelect}
-                            className="hidden"
-                            disabled={isUploadingCvPhoto}
-                          />
-                        </label>
-                      </div>
-                      {isUploadingCvPhoto && (
-                        <p className="text-[9px] font-mono text-purple-400 animate-pulse">Uploading photograph to Cloud Storage...</p>
-                      )}
+                      <input
+                        type="text"
+                        value={profileForm.cvPhotoUrl || ''}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, cvPhotoUrl: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
+                        placeholder="সরাসরি ছবির লিংক (Direct Image URL) পেস্ট করুন"
+                      />
                     </div>
 
                     {/* CV Signature URL */}
                     <div className="space-y-1.5">
                       <label className="text-[9px] font-mono uppercase tracking-wider text-slate-300 block">CV Digital Signature (স্বাক্ষর ইমেজ / URL)</label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={profileForm.cvSignatureUrl || ''}
-                          onChange={(e) => setProfileForm(prev => ({ ...prev, cvSignatureUrl: e.target.value }))}
-                          className="flex-1 px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
-                          placeholder="Or upload signature image →"
-                        />
-                        <label className="px-3 py-2 bg-slate-950 border border-slate-800 text-slate-300 hover:text-white rounded-xl hover:bg-slate-800 cursor-pointer flex items-center justify-center text-xs transition-colors relative">
-                          <Upload size={13} />
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleCvSignatureFileSelect}
-                            className="hidden"
-                            disabled={isUploadingCvSignature}
-                          />
-                        </label>
-                      </div>
-                      {isUploadingCvSignature && (
-                        <p className="text-[9px] font-mono text-purple-400 animate-pulse">Uploading signature to Cloud Storage...</p>
-                      )}
+                      <input
+                        type="text"
+                        value={profileForm.cvSignatureUrl || ''}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, cvSignatureUrl: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
+                        placeholder="স্বাক্ষর ছবির সরাসরি লিংক (Direct Signature Image URL) পেস্ট করুন"
+                      />
                     </div>
 
                     {/* Date of Birth */}
@@ -1453,45 +1189,26 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
               {/* Project preview upload container */}
               <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-800">
-                <div className="relative aspect-video w-44 rounded-2xl bg-slate-950 overflow-hidden border border-slate-800">
+                <div className="relative aspect-video w-44 rounded-2xl bg-slate-950 overflow-hidden border border-slate-800 shrink-0">
                   <img
                     src={projectForm.imageUrl || "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800"}
                     alt="Preview visual"
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover"
                   />
-                  {isUploadingProjImg && (
-                    <div className="absolute inset-0 bg-slate-950/80 flex items-center justify-center">
-                      <span className="w-6 h-6 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  )}
                 </div>
 
-                <div className="space-y-3 text-center sm:text-left flex-1">
+                <div className="space-y-3 text-center sm:text-left flex-1 w-full">
                   <h4 className="text-xs font-sans font-bold text-white">Project visual preview (প্রজেক্ট ছবি)</h4>
-                  <p className="text-[10px] text-slate-500 font-mono">JPG/PNG ফাইল আপলোড করুন অথবা সরাসরি ছবির লিংক ডানদিকের বক্সে পেস্ট করুন।</p>
+                  <p className="text-[10px] text-slate-500 font-mono">সরাসরি প্রজেক্টের ছবির লিংক নিচের বক্সে পেস্ট করুন।</p>
                   
-                  <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-                    <label className="inline-flex justify-center items-center gap-2 px-4 py-2 bg-slate-950 border border-slate-800 hover:bg-slate-800 hover:text-white rounded-xl text-xs font-sans font-medium text-slate-300 cursor-pointer transition-colors shrink-0">
-                      <Upload size={13} />
-                      {isUploadingProjImg ? "Uploading..." : "Upload Project Image File"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleProjFileSelect}
-                        className="hidden"
-                        disabled={isUploadingProjImg}
-                      />
-                    </label>
-
-                    <span className="text-[10px] text-slate-600 hidden sm:inline">OR</span>
-
+                  <div className="flex items-center gap-3">
                     <input
                       type="text"
                       value={projectForm.imageUrl}
                       onChange={(e) => setProjectForm({ ...projectForm, imageUrl: e.target.value })}
-                      className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 text-slate-200 rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
-                      placeholder="সরাসরি ছবির লিংক (Direct Project Image URL/Link) এখানে পেস্ট করুন"
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-slate-200 rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
+                      placeholder="সরাসরি ছবির লিংক (Direct Project Image URL/Link - যেমন: https://images.unsplash.com/...) এখানে পেস্ট করুন"
                     />
                   </div>
                 </div>
@@ -1670,27 +1387,14 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Visual Shot (Image File / URL)</label>
-                  <div className="flex gap-3">
-                    <input
-                      type="text"
-                      value={photoForm.imageUrl}
-                      onChange={e => setPhotoForm(prev => ({ ...prev, imageUrl: e.target.value }))}
-                      className="flex-1 bg-slate-950 border border-slate-800 text-xs rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-purple-500 transition-colors font-mono"
-                      placeholder="https://images.unsplash.com/..."
-                    />
-                    <label className="bg-slate-800 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 hover:text-white rounded-xl px-4 py-3 text-xs font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-all shrink-0">
-                      <Upload size={13} />
-                      <span>{isUploadingPhotoImg ? 'Uploading...' : 'Browse'}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoFileSelect}
-                        className="hidden"
-                        disabled={isUploadingPhotoImg}
-                      />
-                    </label>
-                  </div>
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Visual Shot (Image URL)</label>
+                  <input
+                    type="text"
+                    value={photoForm.imageUrl}
+                    onChange={e => setPhotoForm(prev => ({ ...prev, imageUrl: e.target.value }))}
+                    className="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-purple-500 transition-colors font-mono"
+                    placeholder="সরাসরি ছবির লিংক (Direct Photo URL - যেমন: https://images.unsplash.com/...) পেস্ট করুন"
+                  />
                 </div>
 
                 <div className="sm:col-span-2 space-y-2">
@@ -1870,76 +1574,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           </div>
         )}
 
-        {/* TAB WORKSPACE: SECURITY */}
-        {activeTab === 'security' && (
-          <div className="space-y-8 animate-fade-in">
-            <div>
-              <h2 className="text-xl font-sans font-bold text-white flex items-center gap-2.5">
-                <Lock size={18} className="text-purple-400" />
-                Change Password (অ্যাডমিন পাসওয়ার্ড পরিবর্তন)
-              </h2>
-              <p className="text-slate-400 text-xs mt-1 leading-normal">
-                পাসওয়ার্ড পরিবর্তন করুন। এটি সম্পূর্ণ সুরক্ষিত এবং Firebase Authentication গেটওয়ে দ্বারা পরিচালিত হয়। কোডে কোনো পাসওয়ার্ড সংরক্ষিত বা ট্র্যাক করা হয় না।
-              </p>
-            </div>
 
-            <form onSubmit={handlePasswordChangeSubmit} className="bg-slate-900 border border-slate-800 rounded-2.5xl p-6 md:p-8 space-y-6 max-w-xl">
-              <div className="p-4 bg-purple-500/5 border border-purple-500/10 rounded-2xl flex gap-3 text-xs text-slate-300 leading-relaxed">
-                <ShieldAlert size={16} className="text-purple-400 shrink-0" />
-                <div>
-                  <p className="font-semibold text-purple-300">🔒 শতভাগ নিরাপদ ও পাবলিক-কোড ফ্রী</p>
-                  <p className="mt-1 text-slate-400">
-                    আমাদের এই পোর্টফোলিও সাইটের কোড পাবলিক গিটহাব রিপোজিটরিতে হোস্ট করা থাকলেও আপনার নতুন পাসওয়ার্ডটি গিটহাবের কোনো ফাইলে বা কোনো লোকাল ফাইলে সংরক্ষণ করা হবে না। এটি সরাসরি আপনার ফায়ারবেস অথেনটিকেশন ডাটাবেজে ক্লাউড লেভেলে আপডেট হবে।
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">New Password (নতুন পাসওয়ার্ড)</label>
-                  <input
-                    type="password"
-                    required
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans"
-                    placeholder="কমপক্ষে ৬ অক্ষরের নতুন পাসওয়ার্ড দিন"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Confirm Password (পাসওয়ার্ড নিশ্চিতকরণ)</label>
-                  <input
-                    type="password"
-                    required
-                    value={confirmNewPassword}
-                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans"
-                    placeholder="নতুন পাসওয়ার্ডটি আবার টাইপ করুন"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isUpdatingPass}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-slate-800 disabled:to-slate-800 text-white rounded-xl font-medium text-xs transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer"
-              >
-                {isUpdatingPass ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
-                    Updating Password...
-                  </>
-                ) : (
-                  <>
-                    <Check size={14} />
-                    ভেরিফাই এবং পাসওয়ার্ড সেভ করুন
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-        )}
       </main>
     </div>
   );

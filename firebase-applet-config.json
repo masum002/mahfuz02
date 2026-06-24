@@ -1,10 +1,10 @@
 {
-  "projectId": "genial-parser-g6tp2",
-  "appId": "1:618539864809:web:0ca11b242b91aa65e11678",
-  "apiKey": "AIzaSyC9ZtpXbUzIiFBejJ1Ja7TcH4j3UbeIZi0",
-  "authDomain": "genial-parser-g6tp2.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-2423ff64-af59-4327-b2a2-39217a01897e",
-  "storageBucket": "genial-parser-g6tp2.firebasestorage.app",
-  "messagingSenderId": "618539864809",
-  "measurementId": ""
+  "projectId": "profileview-6e036",
+  "appId": "1:228006480948:web:b266da4895230b1f28ce61",
+  "apiKey": "AIzaSyAtv_u7utLWMZ6Sq3DlNnq_vAP0m_gb6yQ",
+  "authDomain": "profileview-6e036.firebaseapp.com",
+  "firestoreDatabaseId": "",
+  "storageBucket": "profileview-6e036.firebasestorage.app",
+  "messagingSenderId": "228006480948",
+  "measurementId": "G-6K2VX76723"
 }
