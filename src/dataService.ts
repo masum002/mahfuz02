@@ -375,6 +375,14 @@ export async function isDatabaseSeeded(): Promise<boolean> {
   const projectId = db.app.options.projectId || 'unknown_project';
   const projectSpecificKey = `portfolio_seeded_${projectId}`;
 
+  // 1. Fast check local storage (both new and old keys)
+  if (localStorage.getItem(projectSpecificKey) === 'true' || localStorage.getItem('portfolio_seeded') === 'true') {
+    isSeedingCompleted = true;
+    localStorage.setItem(projectSpecificKey, 'true');
+    return true;
+  }
+
+  // 2. Check metadata document in Firestore
   try {
     const docRef = doc(db, 'metadata', 'seeded');
     const docSnap = await getDoc(docRef);
@@ -387,10 +395,28 @@ export async function isDatabaseSeeded(): Promise<boolean> {
     console.warn("Error checking seeded state from Firestore:", error);
   }
 
-  if (localStorage.getItem(projectSpecificKey) === 'true') {
-    isSeedingCompleted = true;
-    return true;
+  // 3. Prevent overwriting: If profile document already exists in Firestore, the DB is already seeded or configured!
+  try {
+    const profileRef = doc(db, 'profile', 'main');
+    const profileSnap = await getDoc(profileRef);
+    if (profileSnap.exists()) {
+      console.log("ℹ️ Existing profile/main document detected in Firestore. Preventing overwrite.");
+      isSeedingCompleted = true;
+      localStorage.setItem(projectSpecificKey, 'true');
+      
+      // Attempt to silently write the seeded metadata flag to avoid checking profile next time
+      try {
+        const seedFlagRef = doc(db, 'metadata', 'seeded');
+        await setDoc(seedFlagRef, { seeded: true, timestamp: new Date().toISOString() });
+      } catch (e) {
+        // Silent catch
+      }
+      return true;
+    }
+  } catch (error) {
+    console.warn("Error checking existing profile document presence in Firestore:", error);
   }
+
   return false;
 }
 

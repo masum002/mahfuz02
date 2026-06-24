@@ -90,7 +90,9 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     cvGender: '',
     cvLanguages: '',
     cvObjective: '',
-    cvSignatureUrl: ''
+    cvSignatureUrl: '',
+    aboutDetailText: '',
+    aboutImages: ''
   });
   const [skillsList, setSkillsList] = useState<Skill[]>([]);
   const [projectsList, setProjectsList] = useState<Project[]>([]);
@@ -177,23 +179,43 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
       if (isConfigured) {
         await seedDatabase();
       }
+    } catch (seedErr) {
+      console.error("Database seeding check failure:", seedErr);
+    }
+
+    try {
       const p = await fetchProfile();
       setProfileForm(p);
+    } catch (err) {
+      console.error("Error fetching profile dataset:", err);
+    }
 
+    try {
       const s = await fetchSkills();
       setSkillsList(s);
+    } catch (err) {
+      console.error("Error fetching skills dataset:", err);
+    }
 
+    try {
       const pr = await fetchProjects();
       setProjectsList(pr);
+    } catch (err) {
+      console.error("Error fetching projects dataset:", err);
+    }
 
+    try {
       const ph = await fetchPhotographyItems();
       setPhotographyList(ph);
+    } catch (err) {
+      console.error("Error fetching photography dataset:", err);
+    }
 
+    try {
       const c = await fetchContact();
       setContactForm(c);
     } catch (err) {
-      console.error("Error fetching admin portfolio datasets:", err);
-      showStatus("Could not fetch remote datasets completely. Displaying local cache.", "danger");
+      console.error("Error fetching contact dataset:", err);
     }
   };
 
