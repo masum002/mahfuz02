@@ -139,7 +139,12 @@ export default function Photography({ photos }: PhotographyProps) {
                 initial="enter"
                 animate="center"
                  exit="exit"
-                 className="absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl border border-slate-800 bg-slate-900/60 p-2 overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.85)] flex items-center justify-center transform-gpu"
+                 onClick={() => {
+                   if (activePhoto.id) {
+                     window.location.hash = `#/photography/${activePhoto.id}`;
+                   }
+                 }}
+                 className="absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl border border-slate-800 bg-slate-900/60 p-2 overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.85)] flex items-center justify-center transform-gpu cursor-pointer group"
                  style={{ transformStyle: 'preserve-3d' }}
               >
                 <div className="relative w-full h-full rounded-xl sm:rounded-2xl overflow-hidden">
@@ -147,8 +152,15 @@ export default function Photography({ photos }: PhotographyProps) {
                     src={activePhoto.imageUrl}
                     alt={activePhoto.title}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover select-none transition-transform duration-700 ease-out hover:scale-105"
+                    className="w-full h-full object-cover select-none transition-transform duration-700 ease-out group-hover:scale-105"
                   />
+                  {/* Hover detail info popup overlay */}
+                  <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <span className="px-4 py-2 rounded-full bg-purple-600 border border-purple-500 text-white font-sans text-xs font-bold shadow-lg flex items-center gap-1.5 transform scale-95 group-hover:scale-100 transition-all">
+                      <Camera size={14} />
+                      গল্প ও EXIF বিবরণ দেখুন
+                    </span>
+                  </div>
                   {/* Glass highlight glare layer */}
                   <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent pointer-events-none" />
                 </div>
@@ -197,6 +209,21 @@ export default function Photography({ photos }: PhotographyProps) {
                         {activePhoto.cameraSettings || "f/2.8 | Auto | ISO"}
                       </span>
                     </div>
+                  </div>
+
+                  {/* Link Button to dedicated photo details page */}
+                  <div className="mt-6 pt-4 border-t border-slate-800/60">
+                    <button
+                      onClick={() => {
+                        if (activePhoto.id) {
+                          window.location.hash = `#/photography/${activePhoto.id}`;
+                        }
+                      }}
+                      className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-sans text-xs font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-1.5"
+                    >
+                      <Camera size={14} />
+                      গল্প ও EXIF বিবরণ দেখুন
+                    </button>
                   </div>
                 </div>
 
@@ -319,8 +346,8 @@ export default function Photography({ photos }: PhotographyProps) {
                   <div className="p-4 rounded-2xl bg-slate-950/20 border border-slate-900/60 space-y-2">
                     <h5 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">SEO Optimized Meta Tags</h5>
                     <div className="flex flex-wrap gap-1.5">
-                      <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">#ফটোগ্রাফি_সেটিংস</span>
-                      <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">#ক্যামেরা_টিপস</span>
+                      <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">#PhotographySettings</span>
+                      <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">#CameraTips</span>
                       <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">#CameraSettingsGuide</span>
                       <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">#{activePhoto.title?.replace(/\s+/g, '')}</span>
                       {activePhoto.location && (
@@ -338,7 +365,7 @@ export default function Photography({ photos }: PhotographyProps) {
                   </div>
                   
                   <h3 className="text-xl sm:text-2xl font-sans font-bold text-white tracking-tight leading-snug">
-                    {activePhoto.title}: ক্যামেরা সেটিংস ও বিস্তারিত গাইডলাইন
+                    {activePhoto.title}: Camera Settings & Analysis
                   </h3>
 
                   <div className="text-slate-300 text-sm sm:text-base leading-relaxed font-sans whitespace-pre-wrap space-y-3 border-t border-slate-800/60 pt-4">

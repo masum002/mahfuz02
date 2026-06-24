@@ -12,7 +12,6 @@ export default function Projects({ projects }: ProjectsProps) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -177,7 +176,7 @@ export default function Projects({ projects }: ProjectsProps) {
                     if (!isActive) {
                       setActiveIndex(i);
                     } else {
-                      setSelectedProject(proj);
+                      window.location.hash = `#/project/${proj.id || i}`;
                     }
                   }}
                   className={`absolute w-full max-w-[270px] sm:max-w-[340px] md:max-w-[395px] rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl transition-all duration-300 transform-gpu cursor-pointer ${
@@ -211,7 +210,7 @@ export default function Projects({ projects }: ProjectsProps) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedProject(proj);
+                            window.location.hash = `#/project/${proj.id || i}`;
                           }}
                           className="px-4 py-2 rounded-full bg-purple-600 border border-purple-500 text-white font-sans text-xs font-bold hover:bg-purple-500 hover:scale-105 active:scale-95 transition-all shadow-md flex items-center gap-1.5"
                         >
@@ -358,116 +357,6 @@ export default function Projects({ projects }: ProjectsProps) {
           </div>
         )}
       </div>
-
-      {/* Project Details Modal */}
-      <AnimatePresence>
-        {selectedProject && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop Blur overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedProject(null)}
-              className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl"
-            />
-
-            {/* Modal Body Container */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl z-10 flex flex-col"
-            >
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedProject(null)}
-                className="absolute top-4 right-4 z-20 p-2 rounded-full bg-slate-950/60 hover:bg-slate-950 border border-slate-800 text-slate-400 hover:text-white transition-all shadow-md"
-                aria-label="Close details"
-              >
-                <X size={18} />
-              </button>
-
-              {/* Large Image Header */}
-              <div className="relative aspect-video w-full bg-slate-950 overflow-hidden border-b border-slate-800 shrink-0">
-                <img
-                  src={selectedProject.imageUrl || "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800"}
-                  alt={selectedProject.title}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-60" />
-              </div>
-
-              {/* Content Panel */}
-              <div className="p-6 md:p-8 flex-grow flex flex-col">
-                <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <span className="px-2.5 py-1 text-[10px] font-mono font-bold tracking-wider uppercase bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full">
-                    Featured Project
-                  </span>
-                  {selectedProject.liveUrl && (
-                    <span className="px-2.5 py-1 text-[10px] font-mono font-bold tracking-wider uppercase bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full">
-                      Live Production
-                    </span>
-                  )}
-                </div>
-
-                <h3 className="text-2xl sm:text-3xl font-sans font-extrabold text-white mb-4 tracking-tight">
-                  {selectedProject.title}
-                </h3>
-
-                {/* Description texts with pristine line break formatters */}
-                <div className="text-slate-300 text-sm leading-relaxed mb-6 space-y-4 max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
-                  {selectedProject.details ? (
-                    selectedProject.details.split('\n').map((para, idx) => (
-                      <p key={idx} className="whitespace-pre-line">{para}</p>
-                    ))
-                  ) : (
-                    <p className="whitespace-pre-line">
-                      {selectedProject.description || "A high-performance modern web application built with precision, scalability, and outstanding user experience."}
-                    </p>
-                  )}
-                </div>
-
-                {/* Footer Actions */}
-                <div className="flex flex-wrap items-center gap-4 pt-6 border-t border-slate-800 mt-auto">
-                  {selectedProject.liveUrl && (
-                    <a
-                      href={selectedProject.liveUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-sans text-xs font-bold tracking-wide transition-all shadow-md flex items-center gap-2"
-                    >
-                      <ExternalLink size={14} />
-                      Launch Application
-                    </a>
-                  )}
-
-                  {selectedProject.githubUrl && (
-                    <a
-                      href={selectedProject.githubUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-6 py-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-200 hover:text-white font-sans text-xs font-bold tracking-wide transition-all flex items-center gap-2"
-                    >
-                      <Github size={14} />
-                      View Source Code
-                    </a>
-                  )}
-
-                  <button
-                    onClick={() => setSelectedProject(null)}
-                    className="ml-auto px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800/60 text-slate-400 hover:text-slate-300 text-xs font-bold transition-all"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </section>
   );
 }

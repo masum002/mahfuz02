@@ -93,6 +93,10 @@ export async function fetchSkills(): Promise<Skill[]> {
     if (fetchedSkills.length > 0) {
       return fetchedSkills;
     }
+    const seeded = await isDatabaseSeeded();
+    if (seeded) {
+      return [];
+    }
     return DEFAULT_SKILLS;
   } catch (error) {
     console.warn("Firestore fetchSkills error, falling back to static default:", error);
@@ -164,6 +168,10 @@ export async function fetchProjects(): Promise<Project[]> {
     
     if (fetchedProjects.length > 0) {
       return fetchedProjects;
+    }
+    const seeded = await isDatabaseSeeded();
+    if (seeded) {
+      return [];
     }
     return DEFAULT_PROJECTS;
   } catch (error) {
@@ -298,6 +306,10 @@ export async function fetchPhotographyItems(): Promise<PhotographyItem[]> {
     if (fetchedItems.length > 0) {
       return fetchedItems.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     }
+    const seeded = await isDatabaseSeeded();
+    if (seeded) {
+      return [];
+    }
     return DEFAULT_PHOTOGRAPHY;
   } catch (error) {
     console.warn("Firestore fetchPhotographyItems error, falling back to static default:", error);
@@ -352,3 +364,89 @@ export async function deletePhotographyItem(id: string): Promise<void> {
     handleFirestoreError(error, OperationType.DELETE, `${collectionName}/${id}`);
   }
 }
+
+// DATABASE AUTO-SEEDING HELPERS FOR CLOUD SYNC
+let isSeedingCompleted = false;
+
+export async function isDatabaseSeeded(): Promise<boolean> {
+  if (!isConfigured) return false;
+  if (isSeedingCompleted) return true;
+  if (localStorage.getItem('portfolio_seeded') === 'true') {
+    isSeedingCompleted = true;
+    return true;
+  }
+  try {
+    const docRef = doc(db, 'metadata', 'seeded');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists() && docSnap.data()?.seeded === true) {
+      isSeedingCompleted = true;
+      localStorage.setItem('portfolio_seeded', 'true');
+      return true;
+    }
+  } catch (error) {
+    console.warn("Error checking seeded state from Firestore:", error);
+  }
+  return false;
+}
+
+export async function seedDatabase(): Promise<void> {
+  if (!isConfigured) return;
+  const seeded = await isDatabaseSeeded();
+  if (seeded) return;
+
+  try {
+    console.log("Seeding Firestore database with default portfolio data...");
+    
+    // 1. Profile document
+    const profileRef = doc(db, 'profile', 'main');
+    await setDoc(profileRef, DEFAULT_PROFILE);
+
+    // 2. Contacts document
+    const contactRef = doc(db, 'contacts', 'main');
+    await setDoc(contactRef, DEFAULT_CONTACT);
+
+    // 3. Skills documents
+    const skillsCollection = collection(db, 'skills');
+    for (const skill of DEFAULT_SKILLS) {
+      const { id, ...skillData } = skill;
+      if (id) {
+        await setDoc(doc(skillsCollection, id), skillData);
+      } else {
+        await addDoc(skillsCollection, skillData);
+      }
+    }
+
+    // 4. Projects documents
+    const projectsCollection = collection(db, 'projects');
+    for (const project of DEFAULT_PROJECTS) {
+      const { id, ...projectData } = project;
+      if (id) {
+        await setDoc(doc(projectsCollection, id), projectData);
+      } else {
+        await addDoc(projectsCollection, projectData);
+      }
+    }
+
+    // 5. Photography items
+    const photographyCollection = collection(db, 'photography');
+    for (const item of DEFAULT_PHOTOGRAPHY) {
+      const { id, ...itemData } = item;
+      if (id) {
+        await setDoc(doc(photographyCollection, id), itemData);
+      } else {
+        await addDoc(photographyCollection, itemData);
+      }
+    }
+
+    // 6. Write seed verification flag doc
+    const seedFlagRef = doc(db, 'metadata', 'seeded');
+    await setDoc(seedFlagRef, { seeded: true, timestamp: new Date().toISOString() });
+    
+    isSeedingCompleted = true;
+    localStorage.setItem('portfolio_seeded', 'true');
+    console.log("Firestore database seeding successfully completed.");
+  } catch (error) {
+    console.error("Firestore database seeding failed:", error);
+  }
+}
+

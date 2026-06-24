@@ -26,7 +26,8 @@ import {
   fetchPhotographyItems,
   addPhotographyItem,
   updatePhotographyItem,
-  deletePhotographyItem
+  deletePhotographyItem,
+  seedDatabase
 } from '../dataService';
 import { Profile, Skill, Project, Contact, PhotographyItem } from '../types';
 import { 
@@ -122,7 +123,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           loadAllMetricsData();
         } else {
           // Unauthorized email -> immediately sign out
-          setAuthError(`অ্যাক্সেস রিফিউজড: "${currentUser.email}" অ্যাডমিন ইমেইল হিসেবে অনুমোদিত নয়। শুধুমাত্র ${ALLOWED_EMAILS[0]} এডমিন প্যানেলে অ্যাক্সেস পাবেন।`);
+          setAuthError(`Access Refused: "${currentUser.email}" is not authorized as an admin email. Only ${ALLOWED_EMAILS[0]} has access to the Admin Panel.`);
           setUser(null);
           await signOut(auth);
         }
@@ -140,19 +141,19 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     setAuthError(null);
     try {
       if (!isConfigured) {
-        throw new Error("ফায়ারবেস কনফিগার করা হয়নি। অনুগ্রহ করে আপনার firebase-applet-config.json ফাইলটি চেক করুন।");
+        throw new Error("Firebase is not configured. Please check your firebase-applet-config.json file.");
       }
       await signInWithPopup(auth, googleProvider);
-      showStatus("সফলভাবে গুগল লগইন সম্পূর্ণ হয়েছে।", "success");
+      showStatus("Successfully logged in with Google.", "success");
     } catch (err: any) {
       console.error("Google Auth Failure Error:", err);
-      let errorMsg = err.message || "গুগল সাইন-ইন করতে একটি ত্রুটি ঘটেছে।";
+      let errorMsg = err.message || "An error occurred during Google sign-in.";
       if (err.code === 'auth/popup-closed-by-user') {
-        errorMsg = "লগইন পপআপটি বন্ধ করা হয়েছে। দয়া করে আবার চেষ্টা করুন।";
+        errorMsg = "Login popup was closed. Please try again.";
       } else if (err.code === 'auth/cancelled-popup-request') {
-        errorMsg = "লগইন রিকোয়েস্টটি বাতিল করা হয়েছে।";
+        errorMsg = "Login request was cancelled.";
       } else if (err.code === 'auth/unauthorized-domain') {
-        errorMsg = "এই ডোমেইনটি ফায়ারবেস কনসোলে অথেনটিকেশন ডোমেইন হিসেবে অনুমোদিত নয়। অনুগ্রহ করে ফায়ারবেস কনসোলে Authorized Domains-এ এই ডোমেইনটি যুক্ত করুন।";
+        errorMsg = "This domain is not authorized for authentication in the Firebase console. Please add this domain to Authorized Domains in the Firebase Console.";
       }
       setAuthError(errorMsg);
     } finally {
@@ -164,7 +165,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     try {
       await signOut(auth);
       setUser(null);
-      showStatus("সফলভাবে সাইন-আউট করা হয়েছে।", "success");
+      showStatus("Successfully logged out.", "success");
     } catch (err) {
       console.error("Logout failure:", err);
       setUser(null);
@@ -173,6 +174,9 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
   const loadAllMetricsData = async () => {
     try {
+      if (isConfigured) {
+        await seedDatabase();
+      }
       const p = await fetchProfile();
       setProfileForm(p);
 
@@ -201,7 +205,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   // HANDLERS: PROFILE
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!confirm("আপনি কি প্রোফাইল তথ্য পরিবর্তন করতে চান? 'OK' দিলে পরিবর্তনটি ফায়ারবেসে সংরক্ষিত হবে।")) return;
+    if (!confirm("Are you sure you want to change the profile info? Pressing 'OK' will save the changes to Firebase.")) return;
     setIsSaving(true);
     try {
       await saveProfile(profileForm);
@@ -219,7 +223,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const handleSkillSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!skillForm.name || !skillForm.category) return;
-    if (!confirm("আপনি কি এই স্কিল তথ্যটি সংরক্ষণ করতে চান? 'OK' দিলে এটি ফায়ারবেসে সংরক্ষিত হবে।")) return;
+    if (!confirm("Are you sure you want to save this skill info? Pressing 'OK' will save it to Firebase.")) return;
     setIsSaving(true);
     try {
       if (isEditingSkill && skillForm.id) {
@@ -263,7 +267,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   };
 
   const handleDeleteSkill = async (id: string) => {
-    if (!confirm("আপনি কি নিশ্চিত যে আপনি এই স্কিলটি মুছে ফেলতে চান? 'OK' দিলে এটি ফায়ারবেস থেকে চিরতরে মুছে যাবে।")) return;
+    if (!confirm("Are you sure you want to delete this skill? Pressing 'OK' will permanently delete it from Firebase.")) return;
     try {
       await deleteSkill(id);
       showStatus("Skill removed from portfolio schema.", "success");
@@ -278,7 +282,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const handleProjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!projectForm.title || !projectForm.description) return;
-    if (!confirm("আপনি কি এই প্রজেক্ট তথ্যটি সংরক্ষণ করতে চান? 'OK' দিলে এটি ফায়ারবেসে সংরক্ষিত হবে।")) return;
+    if (!confirm("Are you sure you want to save this project info? Pressing 'OK' will save it to Firebase.")) return;
     setIsSaving(true);
     try {
       if (isEditingProject && projectForm.id) {
@@ -331,7 +335,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   };
 
   const handleDeleteProject = async (id: string) => {
-    if (!confirm("আপনি কি নিশ্চিত যে আপনি এই প্রজেক্টটি মুছে ফেলতে চান? 'OK' দিলে এটি ফায়ারবেস থেকে চিরতরে মুছে যাবে।")) return;
+    if (!confirm("Are you sure you want to delete this project? Pressing 'OK' will permanently delete it from Firebase.")) return;
     try {
       await deleteProject(id);
       showStatus("Project deleted.", "success");
@@ -349,7 +353,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
       showStatus("Title and Photograph Image are required.", "danger");
       return;
     }
-    if (!confirm("আপনি কি এই ফটোগ্রাফি তথ্যটি সংরক্ষণ করতে চান? 'OK' দিলে এটি ফায়ারবেসে সংরক্ষিত হবে।")) return;
+    if (!confirm("Are you sure you want to save this photography info? Pressing 'OK' will save it to Firebase.")) return;
     setIsSaving(true);
     try {
       if (isEditingPhoto && photoForm.id) {
@@ -402,7 +406,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   };
 
   const handleDeletePhoto = async (id: string) => {
-    if (!confirm("আপনি কি নিশ্চিত যে আপনি এই ফটোগ্রাফটি মুছে ফেলতে চান? 'OK' দিলে এটি ফায়ারবেস থেকে চিরতরে মুছে যাবে।")) return;
+    if (!confirm("Are you sure you want to delete this photograph? Pressing 'OK' will permanently delete it from Firebase.")) return;
     try {
       await deletePhotographyItem(id);
       showStatus("Photograph deleted from storage.", "success");
@@ -416,7 +420,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   // HANDLERS: CONTACT
   const handleContactSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!confirm("আপনি কি যোগাযোগের তথ্য পরিবর্তন করতে চান? 'OK' দিলে পরিবর্তনটি ফায়ারবেসে সংরক্ষিত হবে।")) return;
+    if (!confirm("Are you sure you want to change the contact info? Pressing 'OK' will save the changes to Firebase.")) return;
     setIsSaving(true);
     try {
       await saveContact(contactForm);
@@ -468,7 +472,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           <div className="space-y-4">
             <div className="p-5 bg-slate-950/60 rounded-2xl border border-slate-800/85 space-y-3 text-center">
               <p className="text-xs text-slate-300 font-sans">
-                অ্যাডমিন প্যানেলে শুধুমাত্র গুগল অথেনটিকেশন (Google Sign-In) ব্যবহার করে লগইন করা যাবে।
+                The admin panel can only be accessed using Google Authentication (Google Sign-In).
               </p>
               <div className="p-3 bg-purple-500/5 rounded-xl border border-purple-500/10 inline-block">
                 <p className="text-[11px] font-mono text-purple-300">
@@ -476,7 +480,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                 </p>
               </div>
               <p className="text-[10px] text-slate-500 font-sans">
-                (অন্য কোনো জিমেইল অ্যাড্রেস দিয়ে লগইন করলে অ্যাক্সেস দেওয়া হবে না)
+                (Logging in with any other Gmail address will result in access being denied)
               </p>
             </div>
 
@@ -604,16 +608,16 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
         <div className="pt-4 mt-8 md:mt-0 border-t border-slate-800/80">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-slate-400 hover:text-red-400 font-sans font-medium text-xs transition-colors rounded-xl hover:bg-red-500/5 hover:border-red-500/10 border border-transparent"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-xl transition-all font-sans"
           >
             <LogOut size={15} />
-            Sign Out Session
+            Logout
           </button>
         </div>
       </aside>
 
-      {/* Main Form workspace */}
-      <main className="flex-grow p-6 md:p-10 max-w-4xl overflow-y-auto">
+      {/* Main Panel Content Area */}
+      <main className="flex-1 overflow-y-auto p-4 sm:p-8 md:p-12">
         {/* Firebase Cloud Connection Banner */}
         {(!isConfigured || user?.uid === "local-admin-bypassed-uid") ? (
           <div className="mb-8 p-6 rounded-2.5xl bg-amber-500/5 border border-amber-500/20 text-amber-200">
@@ -624,67 +628,67 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
               <div className="space-y-2 flex-1">
                 <h3 className="text-sm font-sans font-extrabold text-white">
                   {user?.uid === "local-admin-bypassed-uid" 
-                    ? "⚠️ Firebase সেটআপ করা থাকলেও ক্লাউড কানেকশন সফল হয়নি! (লোকাল সেশন অ্যাক্টিভ)"
-                    : "⚠️ Firebase ক্লাউডের সাথে কানেক্ট করা হয়নি (লোকাল ব্রাউজার স্টোরেজ অ্যাক্টিভ)"}
+                    ? "⚠️ Firebase configured but cloud connection unsuccessful! (Local session active)"
+                    : "⚠️ Firebase is not connected (Local browser storage active)"}
                 </h3>
                 <p className="text-xs text-slate-350 leading-relaxed font-sans">
                   {user?.uid === "local-admin-bypassed-uid"
-                    ? "আপনার Credentials অনুযায়ী সিস্টেমে Firebase কনফিগার করা আছে। তবে ফায়ারবেস ক্লাউড কানেকশন অথবা লগইন রিকোয়েস্টটি সার্ভারের সাথে সফল হয়নি। যার কারণে সাইটটি স্বয়ংক্রিয়ভাবে Local Fallback সেশনে প্রবেশ করেছে এবং আপনার ব্রাউজারের Local Storage-এ তথ্য সংরক্ষণ করছে। এটি সরাসরি Firebase Firestore ক্লাউডে সেভ হয়নি, তাই নতুন ব্রাউজার বা ইনকগনিটো মোডে ছবি ও প্রজেক্ট দেখা যাবে না।"
-                    : "আপনি যে ব্রাউজার থেকে ছবি বা প্রজেক্ট যোগ করেছেন, সেখানে এটি ঠিকভাবে সাময়িকভাবে দেখা যাচ্ছে কারণ সাইটটি বর্তমানে ব্রাউজারের Local Storage ব্যবহার করছে। এটি ক্লাউডে সেভ হয়নি। অন্য কোনো ব্রাউজার, ছদ্মবেশী মোড (Incognito), বা অন্য ফোন/ল্যাপটপ থেকে লাইভ লিংকে প্রবেশ করলে আপনার যোগ করা এই কন্টেন্টগুলো প্রদর্শিত হবে না।"}
+                    ? "Firebase is configured in your system. However, the connection or login request with Firebase did not succeed. As a result, the site automatically entered a Local Fallback session and is saving data to your browser's Local Storage. It was not saved to your remote Firebase Firestore cloud, meaning items won't be visible in other browsers or incognito mode."
+                    : "Your changes are currently temporarily saved in your local browser storage. They have not been saved to the cloud. If you enter the live link from another browser, incognito mode, or a different phone/laptop, your added content will not be displayed."}
                 </p>
                 <p className="text-xs text-purple-300 font-medium">
                   {user?.uid === "local-admin-bypassed-uid"
-                    ? "রিমোট ফায়ারবেস ক্লাউডের সাথে সফল ও সক্রিয় হ্যান্ডশেক করতে নিচের ২ বা ৩ নম্বর সমস্যাটি ফিক্স করুন:"
-                    : "আপনার ছবি এবং কন্টেন্ট সবার কাছে সবসময় প্রদর্শন করতে নিচের ধাপগুলো মেনে Firebase কানেক্ট করুন:"}
+                    ? "To connect with the remote Firebase cloud, resolve issue 2 or 3 below:"
+                    : "To display your images and content permanently to everyone, connect Firebase by following the steps below:"}
                 </p>
 
                 <details className="group border border-slate-800 bg-slate-950/40 rounded-xl mt-3 overflow-hidden" open={user?.uid === "local-admin-bypassed-uid"}>
                   <summary className="px-4 py-2.5 text-xs font-mono font-bold text-amber-400/95 cursor-pointer select-none hover:text-amber-300 flex items-center justify-between list-none font-sans">
-                    <span>⚙️ কিভাবে ফায়ারবেস কানেকশন ফিক্স এবং সক্রিয় করবেন? (এখানে ক্লিক করুন)</span>
+                    <span>⚙️ How to fix and activate Firebase connection? (Click here)</span>
                     <span className="text-[10px] text-slate-500 transition-transform group-open:rotate-90">▶</span>
                   </summary>
                   <div className="p-4 border-t border-slate-800/60 space-y-4 text-xs font-sans text-slate-300 bg-slate-950">
                     <div className="space-y-1">
-                      <p className="font-bold text-white font-mono text-[11px] text-purple-400">১. Firebase প্রজেক্ট সেটআপ করুন (যদি না করা থাকে)</p>
+                      <p className="font-bold text-white font-mono text-[11px] text-purple-400">1. Setup Firebase Project (if not done already)</p>
                       <ul className="list-disc pl-4 space-y-1 text-slate-400">
-                        <li><a href="https://console.firebase.google.com/" target="_blank" rel="noreferrer" className="text-purple-400 hover:underline">Firebase Console</a>-এ প্রজেক্ট তৈরি করুন।</li>
-                        <li>সেখান থেকে একটি <strong>Web App {"(</>)"}</strong> রেজিস্টার করে Firebase configuration কোডটি সংগ্রহ করুন।</li>
+                        <li>Create a project in the <a href="https://console.firebase.google.com/" target="_blank" rel="noreferrer" className="text-purple-400 hover:underline">Firebase Console</a>.</li>
+                        <li>Register a <strong>Web App {"(</>)"}</strong> and retrieve the Firebase configuration code.</li>
                       </ul>
                     </div>
 
                     <div className="space-y-1.5 p-3 rounded-xl bg-purple-500/5 border border-purple-500/15">
-                      <p className="font-bold text-white font-mono text-[11px] text-purple-400">২. ফায়ারবেস কনসোলে Email/Password Auth সচল করুন (আবশ্যক)</p>
+                      <p className="font-bold text-white font-mono text-[11px] text-purple-400">2. Enable Email/Password Auth (Required)</p>
                       <ul className="list-disc pl-4 space-y-1 text-slate-400">
-                        <li>Firebase Console-এ গিয়ে বাম পাশের মেনু থেকে <strong>Authentication</strong> এ ক্লিক করুন।</li>
-                        <li><strong>Get Started</strong>-এ ক্লিক করার পর <strong>Sign-in method</strong> ট্যাব সিলেক্ট করুন।</li>
-                        <li>Add new provider হিসেবে <strong>Email/Password</strong> সিলেক্ট করে তা <strong>Enable</strong> (সক্রিয়) করে Save বাটনে ক্লিক করুন।</li>
+                        <li>Go to <strong>Authentication</strong> from the left menu in the Firebase Console.</li>
+                        <li>Click <strong>Get Started</strong>, then select the <strong>Sign-in method</strong> tab.</li>
+                        <li>Select <strong>Email/Password</strong> as a provider, <strong>Enable</strong> it, and click Save.</li>
                       </ul>
                     </div>
 
                     <div className="space-y-1.5 p-3 rounded-xl bg-purple-500/5 border border-purple-500/15">
-                      <p className="font-bold text-white font-mono text-[11px] text-purple-400">৩. ফায়ারবেস কনসোলে Firestore Database তৈরি করুন (আবশ্যক)</p>
+                      <p className="font-bold text-white font-mono text-[11px] text-purple-400">3. Create Firestore Database (Required)</p>
                       <ul className="list-disc pl-4 space-y-1 text-slate-400">
-                        <li>Firebase Console থেকে বাম পাশের মেনু থেকে <strong>Firestore Database</strong> সিলেক্ট করুন।</li>
-                        <li><strong>Create Database</strong>-এ ক্লিক করে আপনার পছন্দমতো ডাটাবেজ লোকেশন নির্ধারণ করুন।</li>
-                        <li>নিরাপত্তা নিয়ম নির্ধারণ করার সময় অবশ্যই <strong>Start in Test Mode</strong> সিলেক্ট করুন। এর পর Save/Publish করে নিন।</li>
+                        <li>Select <strong>Firestore Database</strong> from the left menu in the Firebase Console.</li>
+                        <li>Click <strong>Create Database</strong> and choose your database location.</li>
+                        <li>Select <strong>Start in Test Mode</strong> during security rules configuration. Then Save/Publish.</li>
                       </ul>
                     </div>
 
                     <div className="space-y-1">
-                      <p className="font-bold text-white font-mono text-[11px] text-purple-400">৪. Vercel বা হোস্টিং-এ Environment Variables যুক্ত করুন</p>
+                      <p className="font-bold text-white font-mono text-[11px] text-purple-400">4. Add Environment Variables on Vercel or Hosting</p>
                       <p className="text-slate-400 leading-relaxed font-sans">
-                        আপনি যদি <strong>Vercel (যেমন mahfuz02.vercel.app)-এ</strong> সাইট হোস্ট করেন, আপনার Vercel Dashboard-এ গিয়ে Project &gt; Settings &gt; Environment Variables ট্যাবে গিয়ে ঠিক নিচের নামগুলো এবং তাদের ভ্যালু যুক্ত করুন:
+                        If you are hosting your site on <strong>Vercel (e.g., mahfuz02.vercel.app)</strong>, go to your Vercel Dashboard, select Project &gt; Settings &gt; Environment Variables tab, and add the following keys with their values:
                       </p>
                       <div className="bg-slate-950 border border-slate-800 p-3 rounded-lg space-y-1.5 font-mono text-[10.5px] text-slate-300 max-h-52 overflow-y-auto select-all">
-                        <div>VITE_FIREBASE_API_KEY = <span className="text-amber-400">_আপনার_API_KEY_</span></div>
-                        <div>VITE_FIREBASE_AUTH_DOMAIN = <span className="text-amber-400">_আপনার_PROJECT_ID_.firebaseapp.com</span></div>
-                        <div>VITE_FIREBASE_PROJECT_ID = <span className="text-amber-400">_আপনার_PROJECT_ID_</span></div>
-                        <div>VITE_FIREBASE_STORAGE_BUCKET = <span className="text-amber-400">_আপনার_PROJECT_ID_.firebasestorage.app</span></div>
-                        <div>VITE_FIREBASE_MESSAGING_SENDER_ID = <span className="text-amber-404">_আপনার_MESSAGING_SENDER_ID_</span></div>
-                        <div>VITE_FIREBASE_APP_ID = <span className="text-amber-400">_আপনার_APP_ID_</span></div>
+                        <div>VITE_FIREBASE_API_KEY = <span className="text-amber-400">_YOUR_API_KEY_</span></div>
+                        <div>VITE_FIREBASE_AUTH_DOMAIN = <span className="text-amber-400">_YOUR_PROJECT_ID_.firebaseapp.com</span></div>
+                        <div>VITE_FIREBASE_PROJECT_ID = <span className="text-amber-400">_YOUR_PROJECT_ID_</span></div>
+                        <div>VITE_FIREBASE_STORAGE_BUCKET = <span className="text-amber-400">_YOUR_PROJECT_ID_.firebasestorage.app</span></div>
+                        <div>VITE_FIREBASE_MESSAGING_SENDER_ID = <span className="text-amber-404">_YOUR_MESSAGING_SENDER_ID_</span></div>
+                        <div>VITE_FIREBASE_APP_ID = <span className="text-amber-400">_YOUR_APP_ID_</span></div>
                       </div>
                       <p className="text-[10px] text-slate-450 italic mt-1 font-sans">
-                        *অবশ্যই খেয়াল রাখবেন যেন বানানে এবং শুরুতে VITE_ অংশটি ঠিক থাকে! এরপর পুনরায় Vercel থেকে <strong>Redeploy</strong> সম্পন্ন করুন।
+                        *Ensure the keys are spelled correctly with the VITE_ prefix. Then trigger a <strong>Redeploy</strong> on Vercel.
                       </p>
                     </div>
                   </div>
@@ -696,7 +700,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           <div className="mb-8 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-400/20 text-emerald-300 flex items-center gap-3">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
             <span className="text-xs font-sans">
-              🟢 <strong>ক্লাউড কানেক্টেড (Firebase Cloud Database Connected):</strong> আপনার পোর্টফোলিও সফলভাবে Firebase ক্লাউডের সাথে যুক্ত আছে। আপনার ডাটা চিরকালের জন্য সুরক্ষিত এবং যেকোনো ব্রাউজার থেকেই লাইভ ভিজিট করা যাবে।
+              🟢 <strong>Firebase Cloud Database Connected:</strong> Your portfolio is successfully connected to the Firebase cloud. Your data is permanently secured and accessible from any browser.
             </span>
           </div>
         )}
@@ -750,8 +754,8 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                 </div>
                 
                 <div className="space-y-3 text-center sm:text-left flex-1 w-full">
-                  <h4 className="text-sm font-sans font-bold text-white">Avatar Image (অবতার ছবি)</h4>
-                  <p className="text-xs text-slate-500 font-mono">সরাসরি আপনার ছবি বা অবতারের লিংক নিচের বক্সে পেস্ট করুন।</p>
+                  <h4 className="text-sm font-sans font-bold text-white">Avatar Image</h4>
+                  <p className="text-xs text-slate-500 font-mono">Paste a direct image link or URL for your profile avatar.</p>
                   
                   <div className="flex items-center gap-3">
                     <input
@@ -759,7 +763,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                       value={profileForm.avatarUrl || ''}
                       onChange={(e) => setProfileForm(prev => ({ ...prev, avatarUrl: e.target.value }))}
                       className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-slate-200 rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
-                      placeholder="সরাসরি ছবির লিংক (Direct Image URL/Link - যেমন: https://images.unsplash.com/...) এখানে পেস্ট করুন"
+                      placeholder="Paste direct image link (e.g., https://images.unsplash.com/...)"
                     />
                   </div>
                 </div>
@@ -962,25 +966,25 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                         value={profileForm.cvPhotoUrl || ''}
                         onChange={(e) => setProfileForm(prev => ({ ...prev, cvPhotoUrl: e.target.value }))}
                         className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
-                        placeholder="সরাসরি ছবির লিংক (Direct Image URL) পেস্ট করুন"
+                        placeholder="Paste direct photo link (Direct Image URL)"
                       />
                     </div>
 
                     {/* CV Signature URL */}
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-300 block">CV Digital Signature (স্বাক্ষর ইমেজ / URL)</label>
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-300 block">CV Digital Signature (Signature Image URL)</label>
                       <input
                         type="text"
                         value={profileForm.cvSignatureUrl || ''}
                         onChange={(e) => setProfileForm(prev => ({ ...prev, cvSignatureUrl: e.target.value }))}
                         className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
-                        placeholder="স্বাক্ষর ছবির সরাসরি লিংক (Direct Signature Image URL) পেস্ট করুন"
+                        placeholder="Paste direct signature image URL"
                       />
                     </div>
 
                     {/* Date of Birth */}
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">Date of Birth (জন্ম তারিখ)</label>
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">Date of Birth</label>
                       <input
                         type="text"
                         value={profileForm.cvDob || ''}
@@ -992,7 +996,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
                     {/* Nationality */}
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">Nationality (জাতীয়তা)</label>
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">Nationality</label>
                       <input
                         type="text"
                         value={profileForm.cvNationality || ''}
@@ -1004,7 +1008,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
                     {/* Gender */}
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">Gender / Marital Status (লিঙ্গ)</label>
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">Gender / Marital Status</label>
                       <input
                         type="text"
                         value={profileForm.cvGender || ''}
@@ -1016,7 +1020,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
                     {/* Languages */}
                     <div className="space-y-1.5">
-                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">Languages (ভাষাসমূহ)</label>
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400">Languages</label>
                       <input
                         type="text"
                         value={profileForm.cvLanguages || ''}
@@ -1029,7 +1033,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
                   {/* CV Objective Profile Statement Section */}
                   <div className="space-y-1.5 mt-4">
-                    <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">CV Objective / Career Summary (ক্যারিয়ারের লক্ষ্য)</label>
+                    <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">CV Objective / Career Summary</label>
                     <textarea
                       rows={3}
                       value={profileForm.cvObjective || ''}
@@ -1239,8 +1243,8 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                 </div>
 
                 <div className="space-y-3 text-center sm:text-left flex-1 w-full">
-                  <h4 className="text-xs font-sans font-bold text-white">Project visual preview (প্রজেক্ট ছবি)</h4>
-                  <p className="text-[10px] text-slate-500 font-mono">সরাসরি প্রজেক্টের ছবির লিংক নিচের বক্সে পেস্ট করুন।</p>
+                  <h4 className="text-xs font-sans font-bold text-white">Project Visual Preview</h4>
+                  <p className="text-[10px] text-slate-500 font-mono">Paste the direct URL link to your project's cover image.</p>
                   
                   <div className="flex items-center gap-3">
                     <input
@@ -1248,7 +1252,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                       value={projectForm.imageUrl}
                       onChange={(e) => setProjectForm({ ...projectForm, imageUrl: e.target.value })}
                       className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-slate-200 rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
-                      placeholder="সরাসরি ছবির লিংক (Direct Project Image URL/Link - যেমন: https://images.unsplash.com/...) এখানে পেস্ট করুন"
+                      placeholder="Paste direct project image URL (e.g., https://images.unsplash.com/...)"
                     />
                   </div>
                 </div>
@@ -1392,7 +1396,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
             <div>
               <h2 className="text-xl font-sans font-bold text-white flex items-center gap-2.5">
                 <Camera size={18} className="text-purple-400" />
-                Manage Photography Showcase (ফোটোগ্রাফি প্রদর্শনীর বিবরণী)
+                Manage Photography Showcase
               </h2>
               <p className="text-slate-400 text-xs mt-1 leading-normal">
                 Publish high-detail camera captures, adjust lens/sensor setups (EXIF settings), locations, titles, and cinematic descriptions.
@@ -1445,7 +1449,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                     value={photoForm.imageUrl}
                     onChange={e => setPhotoForm(prev => ({ ...prev, imageUrl: e.target.value }))}
                     className="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-purple-500 transition-colors font-mono"
-                    placeholder="সরাসরি ছবির লিংক (Direct Photo URL - যেমন: https://images.unsplash.com/...) পেস্ট করুন"
+                    placeholder="Paste direct photo link (Direct Photo URL - e.g. https://images.unsplash.com/...)"
                   />
                 </div>
 
@@ -1461,13 +1465,13 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                 </div>
 
                 <div className="sm:col-span-2 space-y-2">
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-purple-400 font-bold block">SEO Optimized Article & Photo Story (ক্যামেরা সেটিং ও ফটোগ্রাফি আর্টিকেল)</label>
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-purple-400 font-bold block">SEO Optimized Article & Photo Story</label>
                   <textarea
                     value={photoForm.articleContent || ''}
                     onChange={e => setPhotoForm(prev => ({ ...prev, articleContent: e.target.value }))}
                     rows={6}
                     className="w-full bg-slate-950 border border-slate-800 text-sm rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-purple-500 transition-colors resize-y leading-relaxed"
-                    placeholder="ক্যামেরার এক্সপার্ট সেটিংস, ফটোগ্রাফির গল্প, আলো-ছায়ার ডিস্ট্রিবিউশন এবং এসইও অপ্টিমাইজড কি-ওয়ার্ড সমৃদ্ধ বিস্তারিত আর্টিকেল লিখুন..."
+                    placeholder="Write a detailed article with camera expert settings, the story behind the photo, light/shadow details, and SEO-optimized keywords..."
                   />
                   <span className="text-[10px] text-slate-500 font-mono block">Provide rich, informative details for maximum SEO traction. This will be beautifully displayed as a read-more photologue article.</span>
                 </div>

@@ -109,7 +109,7 @@ export default function About({ profile }: AboutProps) {
                 className="group relative inline-flex items-center gap-2.5 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl text-xs font-bold font-sans tracking-wider uppercase transition-all shadow-xl hover:shadow-purple-500/20 active:scale-95"
               >
                 <Sparkles size={14} className="animate-pulse" />
-                <span>আমার সম্পর্কে বিস্তারিত পড়ুন</span>
+                <span>Read More About Me</span>
                 <span className="absolute inset-0 rounded-xl border border-white/20 scale-105 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300" />
               </button>
             </div>
@@ -166,7 +166,7 @@ export default function About({ profile }: AboutProps) {
                 </div>
                 <div>
                   <h3 className="text-sm font-sans font-bold text-white tracking-wide">
-                    {profile.name} (সম্পর্কে বিস্তারিত)
+                    {profile.name} (Detailed Biography)
                   </h3>
                   <p className="text-[10px] text-slate-500 font-mono tracking-wider">PORTFOLIO DECK // ABOUT ME</p>
                 </div>
@@ -177,7 +177,7 @@ export default function About({ profile }: AboutProps) {
                 className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-400 hover:text-white transition-all flex items-center gap-1.5 text-xs font-bold"
               >
                 <X size={16} />
-                <span>বন্ধ করুন</span>
+                <span>Close</span>
               </button>
             </header>
 
@@ -214,7 +214,7 @@ export default function About({ profile }: AboutProps) {
                 <div className="md:col-span-7 space-y-6">
                   <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
                     <User size={16} className="text-purple-400" />
-                    <h2 className="text-lg font-sans font-bold text-white uppercase tracking-wider">আমার সম্পর্কে বিস্তারিত</h2>
+                    <h2 className="text-lg font-sans font-bold text-white uppercase tracking-wider">Detailed About Me</h2>
                   </div>
 
                   <div className="text-slate-300 text-sm leading-relaxed space-y-5 whitespace-pre-line">
@@ -224,7 +224,7 @@ export default function About({ profile }: AboutProps) {
                       ))
                     ) : (
                       <p className="text-slate-300">
-                        মাহফুজ আর মাসুম একজন পেশাদার ফুল-স্ট্যাক ওয়েব এবং ক্লাউড আর্কিটেক্ট। তিনি বিভিন্ন প্রজেক্টের রিয়েল-টাইম আর্কিটেকচার ম্যানেজমেন্ট, এডমিন কন্ট্রোলস, ক্লাউড নেটিভ ডেপ্লয়মেন্ট ইত্যাদি দক্ষভাবে সম্পন্ন করতে পারেন।
+                        Mahfuz R Masum is a professional Lead Full-Stack & Cloud Engineer. He specializes in designing real-time system architectures, robust administrative controls, secure data layers, and cloud native microservice orchestrations.
                       </p>
                     )}
                   </div>
@@ -234,16 +234,16 @@ export default function About({ profile }: AboutProps) {
                     <div className="p-4 rounded-xl bg-slate-900/20 border border-slate-850 flex gap-3 items-start">
                       <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="text-xs font-bold text-white font-sans">উন্নত রিয়্যাক্ট ফ্রেমওয়ার্ক</h4>
-                        <p className="text-[11px] text-slate-500 leading-normal mt-0.5">Vite, Next.js, Framer Motion, Recharts ও tailwindCSS এ দক্ষ।</p>
+                        <h4 className="text-xs font-bold text-white font-sans">Advanced React Frameworks</h4>
+                        <p className="text-[11px] text-slate-500 leading-normal mt-0.5">Highly proficient in Vite, Next.js, Framer Motion, Recharts, and Tailwind CSS.</p>
                       </div>
                     </div>
 
                     <div className="p-4 rounded-xl bg-slate-900/20 border border-slate-850 flex gap-3 items-start">
                       <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="text-xs font-bold text-white font-sans">ক্লাউড ও সার্ভারলেস</h4>
-                        <p className="text-[11px] text-slate-500 leading-normal mt-0.5">Firebase, Docker, Google Cloud Platform এবং CI/CD কনফিগারেশন।</p>
+                        <h4 className="text-xs font-bold text-white font-sans">Cloud & Serverless</h4>
+                        <p className="text-[11px] text-slate-500 leading-normal mt-0.5">Experienced in Firebase, Docker, Google Cloud Platform, and custom CI/CD pipelines.</p>
                       </div>
                     </div>
                   </div>
@@ -253,7 +253,7 @@ export default function About({ profile }: AboutProps) {
                 <div className="md:col-span-5 space-y-6">
                   <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
                     <Image size={16} className="text-purple-400" />
-                    <h2 className="text-lg font-sans font-bold text-white uppercase tracking-wider">আমার কিছু ছবি</h2>
+                    <h2 className="text-lg font-sans font-bold text-white uppercase tracking-wider">My Gallery</h2>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4">
@@ -290,7 +290,7 @@ export default function About({ profile }: AboutProps) {
                 className="px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white text-xs font-sans font-bold tracking-wider uppercase rounded-xl transition-all shadow-md inline-flex items-center gap-2"
               >
                 <X size={14} />
-                ফিরে যান (বন্ধ করুন)
+                Go Back (Close)
               </button>
               <p className="text-[10px] text-slate-600 font-mono mt-4">&copy; 2026 MAHFUZ R MASUM. ALL RIGHTS SECURED.</p>
             </footer>

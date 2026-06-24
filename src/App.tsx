@@ -39,6 +39,8 @@ import Projects from './components/Projects';
 import Photography from './components/Photography';
 import ContactSection from './components/Contact';
 import AdminPanel from './components/AdminPanel';
+import ProjectDetailPage from './components/ProjectDetailPage';
+import PhotographyDetailPage from './components/PhotographyDetailPage';
 
 export default function App() {
   // Safe initialization of view based on query parameters (?view=admin, ?portal=secure, ?admin=true, or ?secret=admin)
@@ -55,7 +57,9 @@ export default function App() {
     }
   };
 
-  const [currentView, setCurrentView] = useState<'portfolio' | 'admin'>(getInitialView());
+  const [currentView, setCurrentView] = useState<'portfolio' | 'admin' | 'project-detail' | 'photography-detail'>(getInitialView());
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<'home' | 'about' | 'skills' | 'projects' | 'photography' | 'contact'>('home');
   const [dotMenuOpen, setDotMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -290,6 +294,48 @@ export default function App() {
     setMobileMenuOpen(false); // Close mobile navigation if open
   }, [currentTab, currentView]);
 
+  // High speed multi-page URL hash listener
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#/project/')) {
+        const id = hash.replace('#/project/', '');
+        setActiveProjectId(id);
+        setActivePhotoId(null);
+        setCurrentView('project-detail');
+      } else if (hash.startsWith('#/photography/')) {
+        const id = hash.replace('#/photography/', '');
+        setActivePhotoId(id);
+        setActiveProjectId(null);
+        setCurrentView('photography-detail');
+      } else if (hash === '#/admin' || hash === '#admin') {
+        setCurrentView('admin');
+        setActiveProjectId(null);
+        setActivePhotoId(null);
+      } else {
+        setActiveProjectId(null);
+        setActivePhotoId(null);
+        
+        // Use URLSearchParams or defaults
+        const params = new URLSearchParams(window.location.search);
+        const isParamAdmin = params.get('view') === 'admin' || 
+                             params.get('portal') === 'secure' || 
+                             params.get('admin') === 'true' || 
+                             params.get('secret') === 'admin';
+        setCurrentView(isParamAdmin ? 'admin' : 'portfolio');
+
+        const sectionId = hash.replace('#/', '').replace('#', '');
+        if (['home', 'about', 'skills', 'projects', 'photography', 'contact'].includes(sectionId)) {
+          setCurrentTab(sectionId as any);
+        }
+      }
+    };
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   const handleNavigateToContact = () => {
     setCurrentView('portfolio');
     setTimeout(() => {
@@ -302,7 +348,7 @@ export default function App() {
     if (!messageText.trim()) return;
 
     // Auto generate dynamic local date to include in subject as requested
-    const currentDateStr = new Date().toLocaleDateString('bn-BD', {
+    const currentDateStr = new Date().toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -312,7 +358,7 @@ export default function App() {
     const subject = `[Portfolio Message] - ${currentDateStr}`;
     
     // Auto generate professional email body format
-    const bodyText = `নাম (Name): ${senderName || 'Anonymous'}\nইমেল (Email): ${senderEmail || 'Not Provided'}\nতারিখ (Date): ${currentDateStr}\n\nমেসেজ (Message):\n${messageText}\n\n---\nSent automatically from MAHFUZ Portfoliologue.`;
+    const bodyText = `Name: ${senderName || 'Anonymous'}\nEmail: ${senderEmail || 'Not Provided'}\nDate: ${currentDateStr}\n\nMessage:\n${messageText}\n\n---\nSent automatically from MAHFUZ Portfoliologue.`;
 
     // Direct email mailto execution
     const mailtoUrl = `mailto:mahfujar003@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
@@ -386,70 +432,70 @@ export default function App() {
           </div>
 
           {/* Navigation link menu items (Desktop) - Subpages Routing - Semantic SEO Optimized List */}
-          {currentView === 'portfolio' ? (
+          {currentView !== 'admin' ? (
             <nav aria-label="Primary Portfolio Directory Index" className="hidden md:flex items-center gap-8">
               <ul className="flex items-center gap-7 text-xs font-mono text-slate-450 uppercase tracking-widest font-semibold">
                 <li>
                   <button 
-                    onClick={() => setCurrentTab('home')}
+                    onClick={() => { window.location.hash = '#home'; }}
                     title="Go to Home section"
                     aria-label="Home Navigation Tab"
-                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentTab === 'home' ? 'text-purple-400 font-bold scale-105' : ''}`}
+                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentView === 'portfolio' && currentTab === 'home' ? 'text-purple-400 font-bold scale-105' : ''}`}
                   >
                     Home
-                    {currentTab === 'home' && (
+                    {currentView === 'portfolio' && currentTab === 'home' && (
                       <motion.span layoutId="activeTabUnderline" className="absolute bottom-[-2px] left-0 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500" />
                     )}
                   </button>
                 </li>
                 <li>
                   <button 
-                    onClick={() => setCurrentTab('about')}
+                    onClick={() => { window.location.hash = '#about'; }}
                     title="Read about Mahfuz's story and vision"
                     aria-label="About Navigation Tab"
-                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentTab === 'about' ? 'text-purple-400 font-bold scale-105' : ''}`}
+                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentView === 'portfolio' && currentTab === 'about' ? 'text-purple-400 font-bold scale-105' : ''}`}
                   >
                     About
-                    {currentTab === 'about' && (
+                    {currentView === 'portfolio' && currentTab === 'about' && (
                       <motion.span layoutId="activeTabUnderline" className="absolute bottom-[-2px] left-0 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500" />
                     )}
                   </button>
                 </li>
                 <li>
                   <button 
-                    onClick={() => setCurrentTab('skills')}
+                    onClick={() => { window.location.hash = '#skills'; }}
                     title="View technical skills and expertise stack"
                     aria-label="Skills Navigation Tab"
-                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentTab === 'skills' ? 'text-purple-400 font-bold scale-105' : ''}`}
+                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentView === 'portfolio' && currentTab === 'skills' ? 'text-purple-400 font-bold scale-105' : ''}`}
                   >
                     Skills
-                    {currentTab === 'skills' && (
+                    {currentView === 'portfolio' && currentTab === 'skills' && (
                       <motion.span layoutId="activeTabUnderline" className="absolute bottom-[-2px] left-0 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500" />
                     )}
                   </button>
                 </li>
                 <li>
                   <button 
-                    onClick={() => setCurrentTab('projects')}
+                    onClick={() => { window.location.hash = '#projects'; }}
                     title="Browse development projects and details"
                     aria-label="Projects Navigation Tab"
-                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentTab === 'projects' ? 'text-purple-400 font-bold scale-105' : ''}`}
+                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentView === 'portfolio' && currentTab === 'projects' ? 'text-purple-400 font-bold scale-105' : ''}`}
                   >
                     Projects
-                    {currentTab === 'projects' && (
+                    {currentView === 'portfolio' && currentTab === 'projects' && (
                       <motion.span layoutId="activeTabUnderline" className="absolute bottom-[-2px] left-0 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500" />
                     )}
                   </button>
                 </li>
                 <li>
                   <button 
-                    onClick={() => setCurrentTab('photography')}
+                    onClick={() => { window.location.hash = '#photography'; }}
                     title="View photography exhibition and SEO camera settings guide"
                     aria-label="Photography Exhibition Navigation Tab"
-                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentTab === 'photography' ? 'text-purple-400 font-bold scale-105' : ''}`}
+                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentView === 'portfolio' && currentTab === 'photography' ? 'text-purple-400 font-bold scale-105' : ''}`}
                   >
                     Photography
-                    {currentTab === 'photography' && (
+                    {currentView === 'portfolio' && currentTab === 'photography' && (
                       <motion.span layoutId="activeTabUnderline" className="absolute bottom-[-2px] left-0 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500" />
                     )}
                   </button>
@@ -459,8 +505,7 @@ export default function App() {
           ) : (
             <button 
               onClick={() => {
-                setCurrentView('portfolio');
-                setCurrentTab('home');
+                window.location.hash = '#home';
               }}
               className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-xl text-xs font-mono font-semibold uppercase tracking-wider transition-all cursor-pointer"
             >
@@ -471,7 +516,7 @@ export default function App() {
 
           {/* Right Header Navigation Panel: Actions Row & Message Button */}
           <div className="hidden md:flex items-center gap-4">
-            {currentView === 'portfolio' && (
+            {currentView !== 'admin' && (
               <button
                 onClick={() => setIsMessageModalOpen(true)}
                 title="Send a message directly to my email address with auto-generated date"
@@ -514,59 +559,59 @@ export default function App() {
             className="fixed top-20 left-0 w-full bg-slate-950 border-b border-slate-900 z-40 md:hidden overflow-hidden shadow-2xl"
           >
             <div className="px-6 py-6 space-y-4 flex flex-col font-mono text-xs uppercase tracking-widest text-slate-400">
-              {currentView === 'portfolio' ? (
+              {currentView !== 'admin' ? (
                 <>
                   <button 
                     onClick={() => {
-                      setCurrentTab('home');
+                      window.location.hash = '#home';
                       setMobileMenuOpen(false);
                     }} 
-                    className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'home' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
+                    className={`text-left py-2 hover:text-white border-b border-transparent ${currentView === 'portfolio' && currentTab === 'home' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
                   >
                     Home
                   </button>
                   <button 
                     onClick={() => {
-                      setCurrentTab('about');
+                      window.location.hash = '#about';
                       setMobileMenuOpen(false);
                     }} 
-                    className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'about' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
+                    className={`text-left py-2 hover:text-white border-b border-transparent ${currentView === 'portfolio' && currentTab === 'about' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
                   >
                     About me
                   </button>
                   <button 
                     onClick={() => {
-                      setCurrentTab('skills');
+                      window.location.hash = '#skills';
                       setMobileMenuOpen(false);
                     }} 
-                    className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'skills' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
+                    className={`text-left py-2 hover:text-white border-b border-transparent ${currentView === 'portfolio' && currentTab === 'skills' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
                   >
                     Skills & Expertise
                   </button>
                   <button 
                     onClick={() => {
-                      setCurrentTab('projects');
+                      window.location.hash = '#projects';
                       setMobileMenuOpen(false);
                     }} 
-                    className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'projects' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
+                    className={`text-left py-2 hover:text-white border-b border-transparent ${currentView === 'portfolio' && currentTab === 'projects' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
                   >
                     Projects
                   </button>
                   <button 
                     onClick={() => {
-                      setCurrentTab('photography');
+                      window.location.hash = '#photography';
                       setMobileMenuOpen(false);
                     }} 
-                    className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'photography' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
+                    className={`text-left py-2 hover:text-white border-b border-transparent ${currentView === 'portfolio' && currentTab === 'photography' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
                   >
                     Photography
                   </button>
                   <button 
                     onClick={() => {
-                      setCurrentTab('contact');
+                      window.location.hash = '#contact';
                       setMobileMenuOpen(false);
                     }} 
-                    className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'contact' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
+                    className={`text-left py-2 hover:text-white border-b border-transparent ${currentView === 'portfolio' && currentTab === 'contact' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
                   >
                     Contact
                   </button>
@@ -579,7 +624,7 @@ export default function App() {
                     className="w-full mt-3 py-3 px-4 bg-purple-500/10 hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 text-purple-400 hover:text-white border border-purple-500/20 hover:border-transparent rounded-xl text-center font-bold font-mono uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all duration-300 shadow-md cursor-pointer"
                   >
                     <MessageSquare size={13} className="animate-pulse" />
-                    <span>Send Message (সেন্ট মেসেজ)</span>
+                    <span>Send Message</span>
                   </button>
                 </>
               ) : (
@@ -587,8 +632,7 @@ export default function App() {
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      setCurrentView('portfolio');
-                      setCurrentTab('home');
+                      window.location.hash = '#home';
                     }}
                     className="w-full py-3.5 bg-slate-900 border border-slate-800 text-slate-300 rounded-xl text-center font-semibold flex items-center justify-center gap-2"
                   >
@@ -720,6 +764,86 @@ export default function App() {
               </div>
             </footer>
           </motion.div>
+        ) : currentView === 'project-detail' ? (
+          <motion.div
+            key="project-detail-view"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35 }}
+            className="pt-20 min-h-[85vh]"
+          >
+            {(() => {
+              const matchedProject = projects.find((p, idx) => p.id === activeProjectId || String(idx) === activeProjectId);
+              if (matchedProject) {
+                return (
+                  <ProjectDetailPage
+                    project={matchedProject}
+                    allProjects={projects}
+                    onBack={() => {
+                      window.location.hash = '#projects';
+                    }}
+                    onNavigateToProject={(id) => {
+                      window.location.hash = `#/project/${id}`;
+                    }}
+                  />
+                );
+              } else {
+                return (
+                  <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6 font-sans">
+                    <h2 className="text-xl font-bold text-slate-300">Project Not Found</h2>
+                    <p className="text-sm text-slate-550 mt-2">The project link might be outdated or invalid.</p>
+                    <button 
+                      onClick={() => { window.location.hash = '#home'; }}
+                      className="mt-6 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-all shadow-md"
+                    >
+                      Back to Home
+                    </button>
+                  </div>
+                );
+              }
+            })()}
+          </motion.div>
+        ) : currentView === 'photography-detail' ? (
+          <motion.div
+            key="photography-detail-view"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35 }}
+            className="pt-20 min-h-[85vh]"
+          >
+            {(() => {
+              const matchedPhoto = photographyList.find((p, idx) => p.id === activePhotoId || String(idx) === activePhotoId);
+              if (matchedPhoto) {
+                return (
+                  <PhotographyDetailPage
+                    photo={matchedPhoto}
+                    allPhotos={photographyList}
+                    onBack={() => {
+                      window.location.hash = '#photography';
+                    }}
+                    onNavigateToPhoto={(id) => {
+                      window.location.hash = `#/photography/${id}`;
+                    }}
+                  />
+                );
+              } else {
+                return (
+                  <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6 font-sans">
+                    <h2 className="text-xl font-bold text-slate-300">Photo Capture Not Found</h2>
+                    <p className="text-sm text-slate-550 mt-2">The photography link might be outdated or invalid.</p>
+                    <button 
+                      onClick={() => { window.location.hash = '#home'; }}
+                      className="mt-6 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-all shadow-md"
+                    >
+                      Back to Home
+                    </button>
+                  </div>
+                );
+              }
+            })()}
+          </motion.div>
         ) : (
           <motion.div
             key="admin-view"
@@ -768,7 +892,7 @@ export default function App() {
                         DIRECT PORTFOLIO CHANNEL
                       </div>
                       <h3 className="text-xl font-sans font-black text-white tracking-tight">
-                        সরাসরি মেসেজ পাঠান <span className="text-slate-400 font-normal">/ Send Message</span>
+                        Send Message
                       </h3>
                     </div>
                     <button
@@ -781,43 +905,43 @@ export default function App() {
                   </div>
 
                   <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                    নিচের ফর্মের মাধ্যমে সরাসরি আমার ব্যক্তিগত ইমেইলে (<span className="text-purple-400">mahfujar003@gmail.com</span>) মেসেজ পাঠাতে পারেন। ইমেইলের সাবজেক্টে আজকের তারিখটি স্বয়ংক্রিয়ভাবে সেট হয়ে যাবে।
+                    You can send a message directly to my personal email (<span className="text-purple-400">mahfujar003@gmail.com</span>) using the form below. Today's date will be automatically set in the subject line.
                   </p>
 
                   <div className="space-y-4">
                     {/* Name input */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">আপনার নাম (Your Name) <span className="text-slate-600 font-normal">(Optional)</span></label>
+                      <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Your Name <span className="text-slate-600 font-normal">(Optional)</span></label>
                       <input
                         type="text"
                         value={senderName}
                         onChange={(e) => setSenderName(e.target.value)}
-                        placeholder="আপনার নাম লিখুন..."
+                        placeholder="Enter your name..."
                         className="w-full bg-slate-950 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all leading-relaxed"
                       />
                     </div>
 
                     {/* Email input */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">আপনার ইমেইল (Your Email) <span className="text-slate-600 font-normal">(Optional)</span></label>
+                      <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Your Email <span className="text-slate-600 font-normal">(Optional)</span></label>
                       <input
                         type="email"
                         value={senderEmail}
                         onChange={(e) => setSenderEmail(e.target.value)}
-                        placeholder="আপনার ইমেইল অ্যাড্রেস..."
+                        placeholder="Enter your email address..."
                         className="w-full bg-slate-950 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all leading-relaxed"
                       />
                     </div>
 
                     {/* Message textarea */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-mono uppercase tracking-widest text-purple-400 block font-bold">আপনার মেসেজ (Your Message) *</label>
+                      <label className="text-[10px] font-mono uppercase tracking-widest text-purple-400 block font-bold">Your Message *</label>
                       <textarea
                         required
                         value={messageText}
                         onChange={(e) => setMessageText(e.target.value)}
                         rows={5}
-                        placeholder="এখানে আপনার সুন্দর বার্তাটি বা পরামর্শ লিখুন..."
+                        placeholder="Write your message or feedback here..."
                         className="w-full bg-slate-950 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all resize-none leading-relaxed"
                       />
                     </div>
@@ -830,7 +954,7 @@ export default function App() {
                       onClick={() => setIsMessageModalOpen(false)}
                       className="px-5 py-2.5 rounded-xl border border-slate-800 hover:bg-slate-850 text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer"
                     >
-                      বাতিল করুন
+                      Cancel
                     </button>
                     <button
                       type="submit"
@@ -838,7 +962,7 @@ export default function App() {
                       className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold uppercase tracking-widest transition-all shadow-md hover:shadow-purple-500/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-600 disabled:shadow-none"
                     >
                       <Send size={12} />
-                      <span>মেসেজ পাঠান</span>
+                      <span>Send Message</span>
                     </button>
                   </div>
                 </form>
@@ -851,8 +975,8 @@ export default function App() {
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className="text-xl font-sans font-black text-white">মেসেজ প্রস্তুত করা হয়েছে!</h3>
-                    <p className="text-sm text-slate-300">আপনার ইমেইল ক্লায়েন্ট খোলা হচ্ছে...</p>
+                    <h3 className="text-xl font-sans font-black text-white">Message Prepared!</h3>
+                    <p className="text-sm text-slate-300">Opening your email client...</p>
                   </div>
 
                   <div className="p-4 bg-slate-950 rounded-2xl border border-slate-850 w-full text-left space-y-2.5 text-xs font-mono">
@@ -863,11 +987,11 @@ export default function App() {
                     <div className="flex justify-between border-b border-slate-900 pb-1.5">
                       <span className="text-slate-500">Auto Subject:</span>
                       <span className="text-pink-400 font-semibold truncate max-w-[240px]">
-                        [Portfolio Message] - {new Date().toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        [Portfolio Message] - {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                       </span>
                     </div>
                     <div className="text-slate-500 text-[10px] leading-relaxed pt-1 text-center">
-                      ইমেল ক্লায়েন্টে "Send" বাটনে চাপ দিয়ে পাঠানো সম্পূর্ণ করুন।
+                      Complete the transmission by pressing the "Send" button in your email client.
                     </div>
                   </div>
 
@@ -879,7 +1003,7 @@ export default function App() {
                     }}
                     className="w-full py-2.5 rounded-xl border border-slate-800 hover:bg-slate-850 text-xs font-bold font-mono text-slate-400 hover:text-white transition-all cursor-pointer"
                   >
-                    বন্ধ করুন (CLOSE WINDOW)
+                    CLOSE WINDOW
                   </button>
                 </div>
               )}
