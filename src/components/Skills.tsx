@@ -32,10 +32,10 @@ export default function Skills({ skills }: SkillsProps) {
             className="flex items-center gap-2 px-3 py-1 rounded-full border border-pink-500/20 bg-pink-500/5 text-pink-400 font-mono text-xs mb-4"
           >
             <Layers size={14} />
-            STACK TELEMETRY
+            EXPERTISE
           </motion.div>
           <h2 className="text-3xl sm:text-4xl font-sans tracking-tight font-extrabold text-white">
-            Technical Superpowers
+            Professional Skillset
           </h2>
           <div className="w-12 h-1 bg-gradient-to-r from-pink-500 to-blue-500 rounded-full mt-4" />
         </div>
@@ -106,7 +106,7 @@ export default function Skills({ skills }: SkillsProps) {
         <div className="mt-16 flex justify-center text-center">
           <div className="inline-flex items-center gap-2 text-xs font-mono text-slate-500 border border-slate-800 px-4 py-2 rounded-xl bg-slate-950/20">
             <Award size={14} className="text-pink-500" />
-            <span>Continuous learning pipeline: Activated</span>
+            <span>Dedicated to continuous learning & modern practices</span>
           </div>
         </div>
       </div>

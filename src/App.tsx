@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Menu, 
@@ -9,7 +9,9 @@ import {
   ShieldCheck, 
   ChevronRight, 
   Code2,
-  MoreVertical
+  MoreVertical,
+  MessageSquare,
+  Send
 } from 'lucide-react';
 import { 
   fetchProfile, 
@@ -67,10 +69,17 @@ export default function App() {
   const [photographyList, setPhotographyList] = useState<PhotographyItem[]>([]);
   const [contact, setContact] = useState<Contact | null>(null);
 
+  // Send Message Modal state
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [senderName, setSenderName] = useState('');
+  const [senderEmail, setSenderEmail] = useState('');
+  const [isMessageSentSuccess, setIsMessageSentSuccess] = useState(false);
+
   // Dynamic system explorer running load state
   const [isExploring, setIsExploring] = useState(false);
-  const [exploreLoaded, setExploreLoaded] = useState(false);
-  const [loadProgress, setLoadProgress] = useState(0);
+  const [exploreLoaded, setExploreLoaded] = useState(true);
+  const [loadProgress, setLoadProgress] = useState(100);
 
   const handleExploreSystem = () => {
     if (exploreLoaded || isExploring) {
@@ -288,6 +297,40 @@ export default function App() {
     }, 100);
   };
 
+  const handleSendMessage = (e: FormEvent) => {
+    e.preventDefault();
+    if (!messageText.trim()) return;
+
+    // Auto generate dynamic local date to include in subject as requested
+    const currentDateStr = new Date().toLocaleDateString('bn-BD', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    // Automatically formatted subject containing the date as requested
+    const subject = `[Portfolio Message] - ${currentDateStr}`;
+    
+    // Auto generate professional email body format
+    const bodyText = `নাম (Name): ${senderName || 'Anonymous'}\nইমেল (Email): ${senderEmail || 'Not Provided'}\nতারিখ (Date): ${currentDateStr}\n\nমেসেজ (Message):\n${messageText}\n\n---\nSent automatically from MAHFUZ Portfoliologue.`;
+
+    // Direct email mailto execution
+    const mailtoUrl = `mailto:mahfujar003@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+    
+    // Launch default email composer
+    window.location.href = mailtoUrl;
+
+    // Success animation and automatic state reset
+    setIsMessageSentSuccess(true);
+    setTimeout(() => {
+      setIsMessageModalOpen(false);
+      setIsMessageSentSuccess(false);
+      setMessageText('');
+      setSenderName('');
+      setSenderEmail('');
+    }, 4000);
+  };
+
   // SPLASH LOADING SHIER
   if (loading) {
     return (
@@ -313,77 +356,105 @@ export default function App() {
       {/* GLOBAL GLASS HEADER NAVIGATION */}
       <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 border-b ${
         scrolled 
-          ? 'bg-slate-950/80 backdrop-blur-md border-slate-900 shadow-lg shadow-black/20 py-4' 
-          : 'bg-transparent border-transparent py-6'
+          ? 'bg-slate-950/85 backdrop-blur-md border-slate-900/80 shadow-lg shadow-black/45 py-3.5' 
+          : 'bg-transparent border-transparent py-5'
       }`}>
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
-          {/* Logo element with premium, custom MAHFUZ styling */}
+          {/* Logo element with premium, custom MAHFUZ styling - SEO Optimized anchor role */}
           <div 
             onClick={() => {
               setCurrentView('portfolio');
               setCurrentTab('home');
             }}
+            aria-label="Mahfuz R Masum Portfolio Logo Home"
             className="flex items-center gap-2.5 text-white font-sans select-none cursor-pointer group"
           >
             <div className="relative">
-              <div className="absolute -inset-1 rounded-xl bg-gradient-to-tr from-purple-500 via-pink-500 to-blue-500 opacity-20 group-hover:opacity-60 blur-xs transition duration-300" />
-              <span className="relative w-9 h-9 rounded-xl bg-slate-900 border border-purple-500/20 text-purple-400 flex items-center justify-center font-black tracking-tighter text-sm group-hover:text-white group-hover:bg-purple-600 group-hover:border-purple-500 transition-all duration-300 shadow-xl shadow-purple-500/5">
+              <div className="absolute -inset-1 rounded-xl bg-gradient-to-tr from-purple-500 via-pink-500 to-amber-500 opacity-20 group-hover:opacity-75 blur-xs transition duration-300 animate-pulse" />
+              <span className="relative w-9 h-9 rounded-xl bg-slate-900 border border-purple-500/30 text-purple-400 flex items-center justify-center font-black tracking-tighter text-sm group-hover:text-white group-hover:bg-gradient-to-r group-hover:from-purple-500 group-hover:to-pink-500 group-hover:border-transparent transition-all duration-300 shadow-xl shadow-purple-500/5">
                 M
               </span>
             </div>
-            <span className="tracking-[0.25em] font-sans font-black text-sm text-slate-100 group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-pink-400 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300">
-              MAHFUZ
-            </span>
+            <div className="flex flex-col">
+              <span className="tracking-[0.25em] font-sans font-black text-sm text-slate-100 group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-pink-400 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300">
+                MAHFUZ
+              </span>
+              <span className="text-[7.5px] font-mono tracking-widest text-slate-500 group-hover:text-purple-400/80 transition-colors uppercase">
+                Full-Stack Engineer
+              </span>
+            </div>
           </div>
 
-          {/* Navigation link menu items (Desktop) - Subpages Routing */}
+          {/* Navigation link menu items (Desktop) - Subpages Routing - Semantic SEO Optimized List */}
           {currentView === 'portfolio' ? (
-            <nav className="hidden md:flex items-center gap-8 text-xs font-mono text-slate-400 uppercase tracking-widest font-semibold">
-              <button 
-                onClick={() => setCurrentTab('home')}
-                className={`transition-colors relative py-1 hover:text-white cursor-pointer ${currentTab === 'home' ? 'text-purple-400 font-bold' : ''}`}
-              >
-                Home
-                {currentTab === 'home' && (
-                  <motion.span layoutId="activeTabUnderline" className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-500" />
-                )}
-              </button>
-              <button 
-                onClick={() => setCurrentTab('about')}
-                className={`transition-colors relative py-1 hover:text-white cursor-pointer ${currentTab === 'about' ? 'text-purple-400 font-bold' : ''}`}
-              >
-                About
-                {currentTab === 'about' && (
-                  <motion.span layoutId="activeTabUnderline" className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-500" />
-                )}
-              </button>
-              <button 
-                onClick={() => setCurrentTab('skills')}
-                className={`transition-colors relative py-1 hover:text-white cursor-pointer ${currentTab === 'skills' ? 'text-purple-400 font-bold' : ''}`}
-              >
-                Skills
-                {currentTab === 'skills' && (
-                  <motion.span layoutId="activeTabUnderline" className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-500" />
-                )}
-              </button>
-              <button 
-                onClick={() => setCurrentTab('projects')}
-                className={`transition-colors relative py-1 hover:text-white cursor-pointer ${currentTab === 'projects' ? 'text-purple-400 font-bold' : ''}`}
-              >
-                Architectural Artifacts
-                {currentTab === 'projects' && (
-                  <motion.span layoutId="activeTabUnderline" className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-500" />
-                )}
-              </button>
-              <button 
-                onClick={() => setCurrentTab('photography')}
-                className={`transition-colors relative py-1 hover:text-white cursor-pointer ${currentTab === 'photography' ? 'text-purple-400 font-bold' : ''}`}
-              >
-                Photography Showcase
-                {currentTab === 'photography' && (
-                  <motion.span layoutId="activeTabUnderline" className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-500" />
-                )}
-              </button>
+            <nav aria-label="Primary Portfolio Directory Index" className="hidden md:flex items-center gap-8">
+              <ul className="flex items-center gap-7 text-xs font-mono text-slate-450 uppercase tracking-widest font-semibold">
+                <li>
+                  <button 
+                    onClick={() => setCurrentTab('home')}
+                    title="Go to Home section"
+                    aria-label="Home Navigation Tab"
+                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentTab === 'home' ? 'text-purple-400 font-bold scale-105' : ''}`}
+                  >
+                    Home
+                    {currentTab === 'home' && (
+                      <motion.span layoutId="activeTabUnderline" className="absolute bottom-[-2px] left-0 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500" />
+                    )}
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => setCurrentTab('about')}
+                    title="Read about Mahfuz's story and vision"
+                    aria-label="About Navigation Tab"
+                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentTab === 'about' ? 'text-purple-400 font-bold scale-105' : ''}`}
+                  >
+                    About
+                    {currentTab === 'about' && (
+                      <motion.span layoutId="activeTabUnderline" className="absolute bottom-[-2px] left-0 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500" />
+                    )}
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => setCurrentTab('skills')}
+                    title="View technical skills and expertise stack"
+                    aria-label="Skills Navigation Tab"
+                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentTab === 'skills' ? 'text-purple-400 font-bold scale-105' : ''}`}
+                  >
+                    Skills
+                    {currentTab === 'skills' && (
+                      <motion.span layoutId="activeTabUnderline" className="absolute bottom-[-2px] left-0 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500" />
+                    )}
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => setCurrentTab('projects')}
+                    title="Browse development projects and details"
+                    aria-label="Projects Navigation Tab"
+                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentTab === 'projects' ? 'text-purple-400 font-bold scale-105' : ''}`}
+                  >
+                    Projects
+                    {currentTab === 'projects' && (
+                      <motion.span layoutId="activeTabUnderline" className="absolute bottom-[-2px] left-0 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500" />
+                    )}
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => setCurrentTab('photography')}
+                    title="View photography exhibition and SEO camera settings guide"
+                    aria-label="Photography Exhibition Navigation Tab"
+                    className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentTab === 'photography' ? 'text-purple-400 font-bold scale-105' : ''}`}
+                  >
+                    Photography
+                    {currentTab === 'photography' && (
+                      <motion.span layoutId="activeTabUnderline" className="absolute bottom-[-2px] left-0 w-full h-[2px] bg-gradient-to-r from-purple-500 to-pink-500" />
+                    )}
+                  </button>
+                </li>
+              </ul>
             </nav>
           ) : (
             <button 
@@ -391,15 +462,27 @@ export default function App() {
                 setCurrentView('portfolio');
                 setCurrentTab('home');
               }}
-              className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-xl text-xs font-mono font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+              className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-xl text-xs font-mono font-semibold uppercase tracking-wider transition-all cursor-pointer"
             >
               <Globe size={13} />
               Return to Public Site
             </button>
           )}
 
-          {/* Right Header Navigation Panel: Admin indicator if active */}
+          {/* Right Header Navigation Panel: Actions Row & Message Button */}
           <div className="hidden md:flex items-center gap-4">
+            {currentView === 'portfolio' && (
+              <button
+                onClick={() => setIsMessageModalOpen(true)}
+                title="Send a message directly to my email address with auto-generated date"
+                aria-label="Send direct message"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 text-purple-400 hover:text-white border border-purple-500/20 hover:border-transparent text-xs font-mono font-bold uppercase tracking-widest transition-all duration-300 shadow-md hover:shadow-purple-500/20 cursor-pointer animate-pulse-subtle"
+              >
+                <MessageSquare size={12} />
+                <span>Message Me</span>
+              </button>
+            )}
+
             {currentView === 'admin' && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-green-500/20 bg-green-500/5 text-green-400 font-mono text-xs">
                 <ShieldCheck size={14} />
@@ -412,7 +495,8 @@ export default function App() {
           <div className="flex md:hidden items-center gap-2">
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-slate-400 hover:text-white bg-slate-900 border border-slate-800 rounded-xl"
+              className="p-2 text-slate-400 hover:text-white bg-slate-900 border border-slate-800/80 rounded-xl cursor-pointer"
+              aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -439,7 +523,7 @@ export default function App() {
                     }} 
                     className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'home' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
                   >
-                    Home Desk
+                    Home
                   </button>
                   <button 
                     onClick={() => {
@@ -448,7 +532,7 @@ export default function App() {
                     }} 
                     className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'about' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
                   >
-                    About Experience
+                    About me
                   </button>
                   <button 
                     onClick={() => {
@@ -457,7 +541,7 @@ export default function App() {
                     }} 
                     className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'skills' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
                   >
-                    Skills Matrix
+                    Skills & Expertise
                   </button>
                   <button 
                     onClick={() => {
@@ -466,7 +550,7 @@ export default function App() {
                     }} 
                     className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'projects' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
                   >
-                    Architectural Artifacts
+                    Projects
                   </button>
                   <button 
                     onClick={() => {
@@ -475,7 +559,7 @@ export default function App() {
                     }} 
                     className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'photography' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
                   >
-                    Photography Showcase
+                    Photography
                   </button>
                   <button 
                     onClick={() => {
@@ -485,6 +569,17 @@ export default function App() {
                     className={`text-left py-2 hover:text-white border-b border-transparent ${currentTab === 'contact' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
                   >
                     Contact
+                  </button>
+                  
+                  <button 
+                    onClick={() => {
+                      setIsMessageModalOpen(true);
+                      setMobileMenuOpen(false);
+                    }} 
+                    className="w-full mt-3 py-3 px-4 bg-purple-500/10 hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 text-purple-400 hover:text-white border border-purple-500/20 hover:border-transparent rounded-xl text-center font-bold font-mono uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all duration-300 shadow-md cursor-pointer"
+                  >
+                    <MessageSquare size={13} className="animate-pulse" />
+                    <span>Send Message (সেন্ট মেসেজ)</span>
                   </button>
                 </>
               ) : (
@@ -603,10 +698,10 @@ export default function App() {
                   <div className="space-y-4 md:pl-12">
                     <h5 className="text-[10px] font-mono uppercase tracking-widest text-slate-550 font-bold">DIRECTORY INDEX</h5>
                     <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-                      <button onClick={() => { setCurrentTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">⚡ Home Desk</button>
+                      <button onClick={() => { setCurrentTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">🏠 Home</button>
                       <button onClick={() => { setCurrentTab('about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">✨ About me</button>
-                      <button onClick={() => { setCurrentTab('skills'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">⚡ Skills Matrix</button>
-                      <button onClick={() => { setCurrentTab('projects'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">⚙ Projects</button>
+                      <button onClick={() => { setCurrentTab('skills'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">📊 Skills</button>
+                      <button onClick={() => { setCurrentTab('projects'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">💼 Projects</button>
                       <button onClick={() => { setCurrentTab('photography'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">📸 Photography</button>
                       <button onClick={() => { setCurrentTab('contact'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">📨 Contact</button>
                     </div>
@@ -636,6 +731,160 @@ export default function App() {
           >
             <AdminPanel onDataChange={loadPortfolioData} />
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* DIRECT EMAIL MESSAGE DIALOG MODAL */}
+      <AnimatePresence>
+        {isMessageModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (!isMessageSentSuccess) setIsMessageModalOpen(false);
+              }}
+              className="absolute inset-0 bg-slate-950/85 backdrop-blur-md"
+            />
+
+            {/* Modal card */}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', duration: 0.5 }}
+              className="relative w-full max-w-lg bg-slate-900 border border-slate-800/90 rounded-3xl overflow-hidden shadow-[0_25px_60px_-15px_rgba(147,51,234,0.15)] z-10"
+            >
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500" />
+              
+              {!isMessageSentSuccess ? (
+                <form onSubmit={handleSendMessage} className="p-6 sm:p-8 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-purple-400 uppercase">
+                        <span className="inline-block w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                        DIRECT PORTFOLIO CHANNEL
+                      </div>
+                      <h3 className="text-xl font-sans font-black text-white tracking-tight">
+                        সরাসরি মেসেজ পাঠান <span className="text-slate-400 font-normal">/ Send Message</span>
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsMessageModalOpen(false)}
+                      className="p-1.5 rounded-lg border border-slate-800/80 hover:bg-slate-850 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-slate-400 leading-relaxed font-sans">
+                    নিচের ফর্মের মাধ্যমে সরাসরি আমার ব্যক্তিগত ইমেইলে (<span className="text-purple-400">mahfujar003@gmail.com</span>) মেসেজ পাঠাতে পারেন। ইমেইলের সাবজেক্টে আজকের তারিখটি স্বয়ংক্রিয়ভাবে সেট হয়ে যাবে।
+                  </p>
+
+                  <div className="space-y-4">
+                    {/* Name input */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">আপনার নাম (Your Name) <span className="text-slate-600 font-normal">(Optional)</span></label>
+                      <input
+                        type="text"
+                        value={senderName}
+                        onChange={(e) => setSenderName(e.target.value)}
+                        placeholder="আপনার নাম লিখুন..."
+                        className="w-full bg-slate-950 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Email input */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">আপনার ইমেইল (Your Email) <span className="text-slate-600 font-normal">(Optional)</span></label>
+                      <input
+                        type="email"
+                        value={senderEmail}
+                        onChange={(e) => setSenderEmail(e.target.value)}
+                        placeholder="আপনার ইমেইল অ্যাড্রেস..."
+                        className="w-full bg-slate-950 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Message textarea */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-mono uppercase tracking-widest text-purple-400 block font-bold">আপনার মেসেজ (Your Message) *</label>
+                      <textarea
+                        required
+                        value={messageText}
+                        onChange={(e) => setMessageText(e.target.value)}
+                        rows={5}
+                        placeholder="এখানে আপনার সুন্দর বার্তাটি বা পরামর্শ লিখুন..."
+                        className="w-full bg-slate-950 border border-slate-800/80 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-700 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all resize-none leading-relaxed"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Actions row */}
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsMessageModalOpen(false)}
+                      className="px-5 py-2.5 rounded-xl border border-slate-800 hover:bg-slate-850 text-xs font-semibold text-slate-400 hover:text-white transition-all cursor-pointer"
+                    >
+                      বাতিল করুন
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!messageText.trim()}
+                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold uppercase tracking-widest transition-all shadow-md hover:shadow-purple-500/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-600 disabled:shadow-none"
+                    >
+                      <Send size={12} />
+                      <span>মেসেজ পাঠান</span>
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="p-8 text-center space-y-6 flex flex-col items-center">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center animate-bounce shadow-lg shadow-emerald-500/5">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-sans font-black text-white">মেসেজ প্রস্তুত করা হয়েছে!</h3>
+                    <p className="text-sm text-slate-300">আপনার ইমেইল ক্লায়েন্ট খোলা হচ্ছে...</p>
+                  </div>
+
+                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-850 w-full text-left space-y-2.5 text-xs font-mono">
+                    <div className="flex justify-between border-b border-slate-900 pb-1.5">
+                      <span className="text-slate-500">To Address:</span>
+                      <span className="text-purple-400 font-semibold">mahfujar003@gmail.com</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-900 pb-1.5">
+                      <span className="text-slate-500">Auto Subject:</span>
+                      <span className="text-pink-400 font-semibold truncate max-w-[240px]">
+                        [Portfolio Message] - {new Date().toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <div className="text-slate-500 text-[10px] leading-relaxed pt-1 text-center">
+                      ইমেল ক্লায়েন্টে "Send" বাটনে চাপ দিয়ে পাঠানো সম্পূর্ণ করুন।
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMessageModalOpen(false);
+                      setIsMessageSentSuccess(false);
+                    }}
+                    className="w-full py-2.5 rounded-xl border border-slate-800 hover:bg-slate-850 text-xs font-bold font-mono text-slate-400 hover:text-white transition-all cursor-pointer"
+                  >
+                    বন্ধ করুন (CLOSE WINDOW)
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

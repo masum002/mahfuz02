@@ -267,6 +267,88 @@ export default function Photography({ photos }: PhotographyProps) {
             </div>
           </div>
         </div>
+
+        {/* SEO Article & Camera Setup Guide Section */}
+        <AnimatePresence mode="wait">
+          {activePhoto.articleContent && (
+            <motion.div
+              key={`article-${activeIndex}`}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.4 }}
+              className="mt-16 w-full max-w-5xl mx-auto bg-slate-900/45 border border-slate-800/80 rounded-3xl p-6 md:p-10 backdrop-blur-md relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+            >
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500" />
+              
+              <div className="flex flex-col md:flex-row gap-8 items-start">
+                <div className="w-full md:w-1/3 space-y-4">
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/60 space-y-3">
+                    <h4 className="text-xs font-mono font-bold tracking-widest text-purple-400 uppercase flex items-center gap-2">
+                      <Sliders size={12} />
+                      TECHNICAL EXIF SPECS
+                    </h4>
+                    
+                    <div className="space-y-2 text-xs font-mono">
+                      <div className="flex justify-between border-b border-slate-900 pb-1.5">
+                        <span className="text-slate-500">Aperture:</span>
+                        <span className="text-slate-300 font-semibold">{activePhoto.cameraSettings?.split('|')[0]?.trim() || 'f/2.8'}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-900 pb-1.5">
+                        <span className="text-slate-500">Exposure/Speed:</span>
+                        <span className="text-slate-300 font-semibold">{activePhoto.cameraSettings?.split('|')[1]?.trim() || 'Auto'}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-slate-900 pb-1.5">
+                        <span className="text-slate-500">ISO Rating:</span>
+                        <span className="text-slate-300 font-semibold">{activePhoto.cameraSettings?.split('|')[2]?.trim() || 'ISO 100'}</span>
+                      </div>
+                      {activePhoto.cameraSettings?.split('|')[3] && (
+                        <div className="flex justify-between border-b border-slate-900 pb-1.5">
+                          <span className="text-slate-500">Focal Length:</span>
+                          <span className="text-slate-300 font-semibold">{activePhoto.cameraSettings?.split('|')[3]?.trim()}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between pt-1">
+                        <span className="text-slate-500">Location Tag:</span>
+                        <span className="text-pink-400 font-semibold">{activePhoto.location || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SEO keywords anchor list of search-optimized tags */}
+                  <div className="p-4 rounded-2xl bg-slate-950/20 border border-slate-900/60 space-y-2">
+                    <h5 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">SEO Optimized Meta Tags</h5>
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">#ফটোগ্রাফি_সেটিংস</span>
+                      <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">#ক্যামেরা_টিপস</span>
+                      <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">#CameraSettingsGuide</span>
+                      <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">#{activePhoto.title?.replace(/\s+/g, '')}</span>
+                      {activePhoto.location && (
+                        <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400">#{activePhoto.location?.split(',')[0]?.trim()?.replace(/\s+/g, '')}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Article content block */}
+                <div className="w-full md:w-2/3 space-y-4">
+                  <div className="flex items-center gap-2 text-xs font-mono text-purple-400 tracking-widest uppercase">
+                    <span className="inline-block w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                    PHOTO ANALYSIS & STORY
+                  </div>
+                  
+                  <h3 className="text-xl sm:text-2xl font-sans font-bold text-white tracking-tight leading-snug">
+                    {activePhoto.title}: ক্যামেরা সেটিংস ও বিস্তারিত গাইডলাইন
+                  </h3>
+
+                  <div className="text-slate-300 text-sm sm:text-base leading-relaxed font-sans whitespace-pre-wrap space-y-3 border-t border-slate-800/60 pt-4">
+                    {activePhoto.articleContent}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );

@@ -36,10 +36,10 @@ export default function ContactSection({ contact }: ContactProps) {
             className="flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/20 bg-purple-500/5 text-purple-400 font-mono text-xs mb-4"
           >
             <Mail size={14} />
-            HANDSHAKE LOGIC
+            CONTACT
           </motion.div>
           <h2 className="text-3xl sm:text-4xl font-sans tracking-tight font-extrabold text-white">
-            Initiate Connection
+            Get in Touch
           </h2>
           <div className="w-12 h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mt-4" />
         </div>
@@ -68,7 +68,7 @@ export default function ContactSection({ contact }: ContactProps) {
                     <Mail size={18} />
                   </span>
                   <div>
-                    <h4 className="text-xs font-mono uppercase tracking-wider text-slate-500">Electron Mail</h4>
+                    <h4 className="text-xs font-mono uppercase tracking-wider text-slate-500">Email Address</h4>
                     <p className="text-slate-200 text-sm hover:text-purple-400 break-all">{contact.email}</p>
                   </div>
                 </div>
@@ -79,7 +79,7 @@ export default function ContactSection({ contact }: ContactProps) {
                       <Phone size={18} />
                     </span>
                     <div>
-                      <h4 className="text-xs font-mono uppercase tracking-wider text-slate-500">Secure Line</h4>
+                      <h4 className="text-xs font-mono uppercase tracking-wider text-slate-500">Phone Number</h4>
                       <p className="text-slate-200 text-sm">{contact.phone}</p>
                     </div>
                   </div>
@@ -91,7 +91,7 @@ export default function ContactSection({ contact }: ContactProps) {
                       <MapPin size={18} />
                     </span>
                     <div>
-                      <h4 className="text-xs font-mono uppercase tracking-wider text-slate-500">Physical Node</h4>
+                      <h4 className="text-xs font-mono uppercase tracking-wider text-slate-500">Location</h4>
                       <p className="text-slate-200 text-sm">{contact.address}</p>
                     </div>
                   </div>

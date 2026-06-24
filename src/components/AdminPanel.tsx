@@ -46,7 +46,8 @@ import {
   ChevronRight,
   Sparkles,
   ShieldAlert,
-  Camera
+  Camera,
+  Github
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -99,10 +100,10 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const [skillForm, setSkillForm] = useState<{ id?: string; name: string; category: string; percentage: number }>({ name: '', category: 'Frontend', percentage: 80 });
   const [isEditingSkill, setIsEditingSkill] = useState(false);
 
-  const [projectForm, setProjectForm] = useState<{ id?: string; title: string; description: string; imageUrl: string; liveUrl: string; githubUrl: string }>({ title: '', description: '', imageUrl: '', liveUrl: '', githubUrl: '' });
+  const [projectForm, setProjectForm] = useState<{ id?: string; title: string; description: string; imageUrl: string; liveUrl: string; githubUrl: string; details: string }>({ title: '', description: '', imageUrl: '', liveUrl: '', githubUrl: '', details: '' });
   const [isEditingProject, setIsEditingProject] = useState(false);
 
-  const [photoForm, setPhotoForm] = useState<{ id?: string; title: string; description: string; imageUrl: string; cameraSettings: string; location: string }>({ title: '', description: '', imageUrl: '', cameraSettings: '', location: '' });
+  const [photoForm, setPhotoForm] = useState<{ id?: string; title: string; description: string; imageUrl: string; cameraSettings: string; location: string; articleContent: string }>({ title: '', description: '', imageUrl: '', cameraSettings: '', location: '', articleContent: '' });
   const [isEditingPhoto, setIsEditingPhoto] = useState(false);
 
   // Whitelisted Emails defined inside specification & bootstrapped user runtime email
@@ -287,6 +288,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           imageUrl: projectForm.imageUrl,
           liveUrl: projectForm.liveUrl,
           githubUrl: projectForm.githubUrl,
+          details: projectForm.details || '',
           createdAt: new Date().toISOString()
         });
         showStatus("Project details updated successfully.", "success");
@@ -297,11 +299,12 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           imageUrl: projectForm.imageUrl,
           liveUrl: projectForm.liveUrl,
           githubUrl: projectForm.githubUrl,
+          details: projectForm.details || '',
           createdAt: new Date().toISOString()
         });
         showStatus("Project added to production deck successfully.", "success");
       }
-      setProjectForm({ title: '', description: '', imageUrl: '', liveUrl: '', githubUrl: '' });
+      setProjectForm({ title: '', description: '', imageUrl: '', liveUrl: '', githubUrl: '', details: '' });
       setIsEditingProject(false);
       await loadAllMetricsData();
       onDataChange();
@@ -321,7 +324,8 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
       description: p.description,
       imageUrl: p.imageUrl,
       liveUrl: p.liveUrl,
-      githubUrl: p.githubUrl
+      githubUrl: p.githubUrl,
+      details: p.details || ''
     });
     setIsEditingProject(true);
   };
@@ -355,6 +359,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           imageUrl: photoForm.imageUrl,
           cameraSettings: photoForm.cameraSettings,
           location: photoForm.location,
+          articleContent: photoForm.articleContent || '',
           createdAt: new Date().toISOString()
         });
         showStatus("Photograph details updated successfully.", "success");
@@ -365,11 +370,12 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
           imageUrl: photoForm.imageUrl,
           cameraSettings: photoForm.cameraSettings,
           location: photoForm.location,
+          articleContent: photoForm.articleContent || '',
           createdAt: new Date().toISOString()
         });
         showStatus("Photograph added to the live gallery database.", "success");
       }
-      setPhotoForm({ title: '', description: '', imageUrl: '', cameraSettings: '', location: '' });
+      setPhotoForm({ title: '', description: '', imageUrl: '', cameraSettings: '', location: '', articleContent: '' });
       setIsEditingPhoto(false);
       await loadAllMetricsData();
       onDataChange();
@@ -389,7 +395,8 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
       description: p.description,
       imageUrl: p.imageUrl,
       cameraSettings: p.cameraSettings || 'f/2.8 | 1/125s | ISO 200',
-      location: p.location || ''
+      location: p.location || '',
+      articleContent: p.articleContent || ''
     });
     setIsEditingPhoto(true);
   };
@@ -841,6 +848,34 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                 />
               </div>
 
+              {/* ABOUT DETAILED SCREEN SETTINGS */}
+              <div className="bg-slate-900/30 border border-slate-800 p-6 rounded-2xl space-y-4">
+                <h4 className="text-xs font-mono uppercase tracking-widest text-purple-400 font-bold">About Me Detailed Page Settings</h4>
+                
+                <div className="space-y-2">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">About Me Detailed Text (Supporting Newlines)</label>
+                  <textarea
+                    rows={8}
+                    value={profileForm.aboutDetailText || ''}
+                    onChange={(e) => setProfileForm(prev => ({ ...prev, aboutDetailText: e.target.value }))}
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500"
+                    placeholder="Enter deep description about your professional background, philosophy, achievements, etc."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">About Me Photos (Comma-separated URLs)</label>
+                  <textarea
+                    rows={3}
+                    value={profileForm.aboutImages || ''}
+                    onChange={(e) => setProfileForm(prev => ({ ...prev, aboutImages: e.target.value }))}
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500"
+                    placeholder="E.g., https://images.unsplash.com/... , https://images.unsplash.com/..."
+                  />
+                  <span className="text-[9px] text-slate-500 font-mono">Separate each image URL with a comma. These photos will be displayed nicely in your detailed About page.</span>
+                </div>
+              </div>
+
               {/* DYNAMIC RESUME PDF SETTINGS SUB-CARD */}
               <div className="mt-8 pt-8 border-t border-slate-800 space-y-6">
                 <div className="bg-slate-900/40 border border-slate-850 p-6 rounded-2xl relative overflow-hidden">
@@ -1243,6 +1278,17 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                 />
               </div>
 
+              <div className="space-y-2">
+                <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Detailed Specifications / Case Study (Details popup content)</label>
+                <textarea
+                  rows={6}
+                  value={projectForm.details}
+                  onChange={(e) => setProjectForm({ ...projectForm, details: e.target.value })}
+                  className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 placeholder-slate-600"
+                  placeholder="Enter deep project details, system architecture, challenges solved, results, etc. This will be shown when anyone clicks on the project card."
+                />
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Live Demo Link</label>
@@ -1302,13 +1348,14 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                       </div>
                       <div className="space-y-1 overflow-hidden">
                         <h4 className="text-xs font-bold text-white truncate">{pr.title}</h4>
-                        <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed">{pr.description}</p>
+                        <p className="text-slate-500 text-[10px] line-clamp-2 leading-relaxed">{pr.description}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between border-t border-slate-900 pt-3">
                       <div className="flex gap-2">
                         {pr.liveUrl && <a href={pr.liveUrl} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white"><ExternalLink size={12} /></a>}
+                        {pr.githubUrl && <a href={pr.githubUrl} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white"><Github size={12} /></a>}
                       </div>
 
                       <div className="flex items-center gap-1.5">
@@ -1412,6 +1459,18 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                     placeholder="Moody narrative describing the atmosphere, lighting, feeling or subject..."
                   />
                 </div>
+
+                <div className="sm:col-span-2 space-y-2">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-purple-400 font-bold block">SEO Optimized Article & Photo Story (ক্যামেরা সেটিং ও ফটোগ্রাফি আর্টিকেল)</label>
+                  <textarea
+                    value={photoForm.articleContent || ''}
+                    onChange={e => setPhotoForm(prev => ({ ...prev, articleContent: e.target.value }))}
+                    rows={6}
+                    className="w-full bg-slate-950 border border-slate-800 text-sm rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-purple-500 transition-colors resize-y leading-relaxed"
+                    placeholder="ক্যামেরার এক্সপার্ট সেটিংস, ফটোগ্রাফির গল্প, আলো-ছায়ার ডিস্ট্রিবিউশন এবং এসইও অপ্টিমাইজড কি-ওয়ার্ড সমৃদ্ধ বিস্তারিত আর্টিকেল লিখুন..."
+                  />
+                  <span className="text-[10px] text-slate-500 font-mono block">Provide rich, informative details for maximum SEO traction. This will be beautifully displayed as a read-more photologue article.</span>
+                </div>
               </div>
 
               {/* Actions row */}
@@ -1421,7 +1480,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                     type="button"
                     onClick={() => {
                       setIsEditingPhoto(false);
-                      setPhotoForm({ title: '', description: '', imageUrl: '', cameraSettings: '', location: '' });
+                      setPhotoForm({ title: '', description: '', imageUrl: '', cameraSettings: '', location: '', articleContent: '' });
                     }}
                     className="px-5 py-2.5 rounded-xl border border-slate-800/85 hover:bg-slate-800/30 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all cursor-pointer"
                   >
@@ -1448,7 +1507,14 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                       <img src={ph.imageUrl} alt={ph.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0 space-y-1">
-                      <h4 className="text-sm font-sans font-bold text-white truncate">{ph.title}</h4>
+                      <div className="flex items-center gap-2 justify-between">
+                        <h4 className="text-sm font-sans font-bold text-white truncate">{ph.title}</h4>
+                        {ph.articleContent ? (
+                          <span className="text-[9px] font-mono font-medium px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">SEO Active</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-medium px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">No Article</span>
+                        )}
+                      </div>
                       <p className="text-slate-450 text-xs truncate">{ph.location || 'No Location'}</p>
                       <p className="text-[10px] font-mono text-purple-400 truncate">{ph.cameraSettings || 'f/2.8 | Auto'}</p>
                       <div className="flex items-center gap-2 pt-2">

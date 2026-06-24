@@ -1,5 +1,6 @@
-import { motion } from 'motion/react';
-import { User, Terminal, Code2, Globe2 } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { User, Terminal, Code2, Globe2, X, Sparkles, Image, CheckCircle } from 'lucide-react';
 import { Profile } from '../types';
 
 interface AboutProps {
@@ -7,6 +8,17 @@ interface AboutProps {
 }
 
 export default function About({ profile }: AboutProps) {
+  const [showDetailedAbout, setShowDetailedAbout] = useState(false);
+
+  // Extract the comma separated images if present, otherwise fallback to standard default placeholder
+  const imagesList = profile.aboutImages
+    ? profile.aboutImages.split(',').map(url => url.trim()).filter(Boolean)
+    : [
+        "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=600",
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600",
+        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=600"
+      ];
+
   return (
     <section id="about" className="py-24 relative overflow-hidden bg-slate-950/60">
       <div className="max-w-6xl mx-auto px-6">
@@ -18,10 +30,10 @@ export default function About({ profile }: AboutProps) {
             className="flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/20 bg-purple-500/5 text-purple-400 font-mono text-xs mb-4"
           >
             <User size={14} />
-            ABOUT FILE_INFO
+            ABOUT ME
           </motion.div>
           <h2 className="text-3xl sm:text-4xl font-sans tracking-tight font-extrabold text-white">
-            Biological & Professional Background
+            My Professional Journey & Vision
           </h2>
           <div className="w-12 h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mt-4" />
         </div>
@@ -69,9 +81,9 @@ export default function About({ profile }: AboutProps) {
                   <span className="text-orange-300">"Simple over complex"</span>
                 </div>
                 <div>&#125;;</div>
-                <div className="pt-4 border-t border-slate-800/50 flex items-center gap-2 text-slate-500 text-[10px]">
-                  <Terminal size={12} className="text-purple-500" />
-                  <span>Node.js server environment: Operational</span>
+                <div className="pt-4 border-t border-slate-800/50 flex items-center gap-2 text-slate-400 text-[10px]">
+                  <Code2 size={12} className="text-purple-500" />
+                  <span>Focusing on robust performance & quality code.</span>
                 </div>
               </div>
             </div>
@@ -89,6 +101,17 @@ export default function About({ profile }: AboutProps) {
               <p className="text-slate-300 text-lg leading-relaxed first-letter:text-4xl first-letter:font-bold first-letter:text-purple-400 first-letter:mr-1">
                 {profile.bio}
               </p>
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={() => setShowDetailedAbout(true)}
+                className="group relative inline-flex items-center gap-2.5 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl text-xs font-bold font-sans tracking-wider uppercase transition-all shadow-xl hover:shadow-purple-500/20 active:scale-95"
+              >
+                <Sparkles size={14} className="animate-pulse" />
+                <span>আমার সম্পর্কে বিস্তারিত পড়ুন</span>
+                <span className="absolute inset-0 rounded-xl border border-white/20 scale-105 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300" />
+              </button>
             </div>
 
             {/* Metric Blocks */}
@@ -126,6 +149,155 @@ export default function About({ profile }: AboutProps) {
           </motion.div>
         </div>
       </div>
+
+      {/* DETAILED ABOUT ME SUB-PAGE (Full Screen Modal Overlay) */}
+      <AnimatePresence>
+        {showDetailedAbout && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950 flex flex-col">
+            {/* Backdrop Glow design elements */}
+            <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-900/10 rounded-full blur-[120px] pointer-events-none select-none" />
+            <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-pink-900/10 rounded-full blur-[120px] pointer-events-none select-none" />
+
+            {/* Header toolbar */}
+            <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-slate-850 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                  <User size={16} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-sans font-bold text-white tracking-wide">
+                    {profile.name} (সম্পর্কে বিস্তারিত)
+                  </h3>
+                  <p className="text-[10px] text-slate-500 font-mono tracking-wider">PORTFOLIO DECK // ABOUT ME</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowDetailedAbout(false)}
+                className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-400 hover:text-white transition-all flex items-center gap-1.5 text-xs font-bold"
+              >
+                <X size={16} />
+                <span>বন্ধ করুন</span>
+              </button>
+            </header>
+
+            {/* Main content body container */}
+            <main className="flex-grow max-w-5xl w-full mx-auto px-6 py-12 md:py-16 space-y-12">
+              {/* Profile Intro Banner Card */}
+              <div className="relative p-6 sm:p-8 rounded-3xl bg-slate-900/40 border border-slate-800/80 overflow-hidden flex flex-col sm:flex-row gap-8 items-center">
+                <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-2xl overflow-hidden border border-slate-700 shadow-xl shrink-0 group">
+                  <img
+                    src={profile.avatarUrl || "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=600"}
+                    alt={profile.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent" />
+                </div>
+
+                <div className="text-center sm:text-left space-y-3">
+                  <span className="px-3 py-1 text-[10px] font-mono tracking-widest uppercase bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full inline-block">
+                    Lead Full-Stack & Cloud Engineer
+                  </span>
+                  <h1 className="text-3xl sm:text-4xl font-sans tracking-tight font-black text-white">
+                    {profile.name}
+                  </h1>
+                  <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
+                    {profile.bio}
+                  </p>
+                </div>
+              </div>
+
+              {/* Two columns: Detail text & Photos Showcase */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
+                {/* Detail Bio text */}
+                <div className="md:col-span-7 space-y-6">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                    <User size={16} className="text-purple-400" />
+                    <h2 className="text-lg font-sans font-bold text-white uppercase tracking-wider">আমার সম্পর্কে বিস্তারিত</h2>
+                  </div>
+
+                  <div className="text-slate-300 text-sm leading-relaxed space-y-5 whitespace-pre-line">
+                    {profile.aboutDetailText ? (
+                      profile.aboutDetailText.split('\n').map((para, index) => (
+                        <p key={index} className="text-slate-300">{para}</p>
+                      ))
+                    ) : (
+                      <p className="text-slate-300">
+                        মাহফুজ আর মাসুম একজন পেশাদার ফুল-স্ট্যাক ওয়েব এবং ক্লাউড আর্কিটেক্ট। তিনি বিভিন্ন প্রজেক্টের রিয়েল-টাইম আর্কিটেকচার ম্যানেজমেন্ট, এডমিন কন্ট্রোলস, ক্লাউড নেটিভ ডেপ্লয়মেন্ট ইত্যাদি দক্ষভাবে সম্পন্ন করতে পারেন।
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Quick summary highlights */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                    <div className="p-4 rounded-xl bg-slate-900/20 border border-slate-850 flex gap-3 items-start">
+                      <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-xs font-bold text-white font-sans">উন্নত রিয়্যাক্ট ফ্রেমওয়ার্ক</h4>
+                        <p className="text-[11px] text-slate-500 leading-normal mt-0.5">Vite, Next.js, Framer Motion, Recharts ও tailwindCSS এ দক্ষ।</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-slate-900/20 border border-slate-850 flex gap-3 items-start">
+                      <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-xs font-bold text-white font-sans">ক্লাউড ও সার্ভারলেস</h4>
+                        <p className="text-[11px] text-slate-500 leading-normal mt-0.5">Firebase, Docker, Google Cloud Platform এবং CI/CD কনফিগারেশন।</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Photo Gallery Showcase */}
+                <div className="md:col-span-5 space-y-6">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                    <Image size={16} className="text-purple-400" />
+                    <h2 className="text-lg font-sans font-bold text-white uppercase tracking-wider">আমার কিছু ছবি</h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    {imagesList.map((imgUrl, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 15 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.15 }}
+                        className="relative aspect-video rounded-2xl overflow-hidden border border-slate-800 shadow-lg group bg-slate-950"
+                      >
+                        <img
+                          src={imgUrl}
+                          alt={`Mahfuz Photo ${i + 1}`}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-slate-950/10 group-hover:bg-transparent transition-colors" />
+                        <div className="absolute bottom-3 left-3 px-2 py-1 bg-slate-950/60 backdrop-blur-md rounded-lg border border-slate-800 text-[9px] font-mono text-slate-300">
+                          IMAGE_{String(i + 1).padStart(2, '0')}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </main>
+
+            {/* Footer */}
+            <footer className="bg-slate-950 border-t border-slate-900 py-8 px-6 text-center">
+              <button
+                onClick={() => setShowDetailedAbout(false)}
+                className="px-8 py-3 bg-purple-600 hover:bg-purple-500 text-white text-xs font-sans font-bold tracking-wider uppercase rounded-xl transition-all shadow-md inline-flex items-center gap-2"
+              >
+                <X size={14} />
+                ফিরে যান (বন্ধ করুন)
+              </button>
+              <p className="text-[10px] text-slate-600 font-mono mt-4">&copy; 2026 MAHFUZ R MASUM. ALL RIGHTS SECURED.</p>
+            </footer>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
+

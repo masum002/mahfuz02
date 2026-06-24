@@ -24,6 +24,8 @@ export interface Profile {
   cvLanguages?: string;
   cvObjective?: string;
   cvSignatureUrl?: string;
+  aboutDetailText?: string;
+  aboutImages?: string;
 }
 
 export interface Skill {
@@ -41,6 +43,7 @@ export interface Project {
   imageUrl: string;
   liveUrl: string;
   githubUrl: string;
+  details?: string;
   createdAt: string;
 }
 
@@ -62,5 +65,6 @@ export interface PhotographyItem {
   imageUrl: string;
   cameraSettings?: string; // e.g. "f/1.8 | 1/250s | ISO 100"
   location?: string; // e.g. "Sylhet, Bangladesh"
+  articleContent?: string; // SEO Optimized photography article content
   createdAt: string;
 }

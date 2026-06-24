@@ -447,22 +447,22 @@ export default function Hero({
           transition={{ delay: 0.2, duration: 0.6 }}
         >
           <span className="px-3 py-1 text-xs border border-purple-500/30 text-purple-400 bg-purple-500/5 rounded-full font-mono font-semibold tracking-wider uppercase mb-4 inline-block">
-            Welcome to my ecosystem
+            WELCOME TO MY PORTFOLIO
           </span>
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-sans tracking-tight font-extrabold text-white mb-6">
             {profile.heroGreeting ? (
               profile.heroGreeting.includes(profile.name) ? (
                 <span>
                   {profile.heroGreeting.split(profile.name)[0]}
-                  <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">{profile.name}</span>
+                  <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(168,85,247,0.5)] font-black hover:scale-105 inline-block transition-transform duration-300 select-all">{profile.name}</span>
                   {profile.heroGreeting.split(profile.name)[1]}
                 </span>
               ) : (
-                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">{profile.heroGreeting}</span>
+                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(168,85,247,0.5)] font-black">{profile.heroGreeting}</span>
               )
             ) : (
               <>
-                Hi, I'm <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">{profile.name}</span>
+                Hi, I'm <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(168,85,247,0.5)] font-black hover:scale-105 inline-block transition-transform duration-300 select-all">{profile.name}</span>
               </>
             )}
           </h1>
@@ -514,77 +514,34 @@ export default function Hero({
           </button>
         </motion.div>
 
-        {/* Explore More Modern / High-End Interactive Section */}
-        <div className="relative mt-20 pb-12 flex flex-col items-center">
-          {!exploreComplete ? (
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0.8 }}
-              whileHover={{ scale: 1.05, opacity: 1 }}
-              animate={{ y: [0, 8, 0] }}
-              transition={{ 
-                y: { repeat: Infinity, duration: 2.2, ease: "easeInOut" },
-                scale: { duration: 0.2 },
-                opacity: { duration: 0.2 }
+        {/* Pure Professional Human Portfolio Scroll Down Indicator */}
+        <div className="relative mt-24 pb-12 flex flex-col items-center">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.8 }}
+          >
+            <button
+              onClick={() => {
+                const aboutSection = document.getElementById('about');
+                if (aboutSection) {
+                  aboutSection.scrollIntoView({ behavior: 'smooth' });
+                }
               }}
-              className="relative cursor-pointer group flex flex-col items-center justify-center"
-              onClick={onExploreSystem}
+              className="group cursor-pointer flex flex-col items-center gap-2"
+              aria-label="Scroll down to explore details"
             >
-              {/* Pulsing glow ring */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-blue-500/20 rounded-full blur-xl group-hover:blur-2xl transition-all duration-300 animate-pulse" />
-              
-              <div className="relative px-8 py-3.5 bg-slate-900/90 border border-purple-500/30 rounded-full flex items-center gap-3 backdrop-blur-md shadow-2xl transition-all duration-300 group-hover:border-purple-400 group-hover:shadow-purple-500/10">
-                <span className="text-xs font-mono tracking-[0.2em] text-transparent bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text font-bold uppercase">
-                  Explore More
-                </span>
-                
-                {isExploring ? (
-                  <RefreshCw size={14} className="text-purple-400 animate-spin" />
-                ) : (
-                  <motion.div
-                    animate={{ y: [-2, 2, -2] }}
-                    transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
-                  >
-                    <ChevronDown size={14} className="text-purple-400" />
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          ) : (
-            <div className="px-6 py-2 rounded-full bg-purple-500/5 border border-purple-500/20 text-xs font-mono text-purple-400 flex items-center justify-center gap-2 shadow-sm animate-pulse tracking-wide">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-              SYSTEM PORTFOLIO LOADED
-            </div>
-          )}
-
-          {/* Cyberpunk progress logging panel */}
-          {isExploring && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 max-w-sm mx-auto text-left font-mono text-[10px] bg-slate-950/90 border border-purple-500/20 p-4 rounded-xl text-purple-400 shadow-2xl relative"
-            >
-              <div className="absolute top-2 right-2 text-[8px] tracking-widest text-slate-500 animate-pulse">
-                SYS_BOOTING
-              </div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] tracking-wider text-slate-300">SYSTEM MATRIX COMPILATION:</span>
-                <span className="font-bold text-slate-100">{loadProgress}%</span>
-              </div>
-              {/* Progress Bar Container */}
-              <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden mb-2.5">
-                <div 
-                  className="bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 h-full transition-all duration-100 rounded-full" 
-                  style={{ width: `${loadProgress}%` }} 
-                />
-              </div>
-              <div className="space-y-0.5 text-[8px] text-slate-500 uppercase overflow-hidden h-12 flex flex-col justify-end">
-                {loadProgress > 15 && <p className="text-purple-500/80">▸ loading profile parameters...</p>}
-                {loadProgress > 40 && <p className="text-pink-550">▸ streaming expertise matrices...</p>}
-                {loadProgress > 70 && <p className="text-blue-400">▸ caching projects & contacts...</p>}
-                {loadProgress > 90 && <p className="text-emerald-400">✔ handshake complete. opening portal.</p>}
-              </div>
-            </motion.div>
-          )}
+              <span className="text-xs font-mono tracking-[0.25em] text-slate-500 group-hover:text-purple-400 transition-colors duration-300 uppercase font-medium">
+                Scroll to explore
+              </span>
+              <motion.div
+                animate={{ y: [0, 6, 0] }}
+                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+              >
+                <ChevronDown size={18} className="text-slate-500 group-hover:text-purple-400 transition-colors duration-300" />
+              </motion.div>
+            </button>
+          </motion.div>
         </div>
       </div>
 
@@ -633,7 +590,7 @@ export default function Hero({
             {/* Technical skills list */}
             <div>
               <h3 style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', borderBottom: '1.5px solid #cbd5e1', paddingBottom: '4px', margin: '0 0 10px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Expertise Matrix
+                Skills & Expertise
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {cvSkillsList.map((skill, index) => (
