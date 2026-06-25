@@ -30,6 +30,7 @@ import {
   seedDatabase
 } from '../dataService';
 import { Profile, Skill, Project, Contact, PhotographyItem } from '../types';
+import { DEFAULT_PROFILE, DEFAULT_CONTACT } from '../defaultData';
 import { 
   User, 
   Layers, 
@@ -92,12 +93,19 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     cvObjective: '',
     cvSignatureUrl: '',
     aboutDetailText: '',
-    aboutImages: ''
+    aboutImages: '',
+    aboutYearsExp: '',
+    aboutProjectsDone: '',
+    aboutSuccessRate: '',
+    aboutHighlight1Title: '',
+    aboutHighlight1Desc: '',
+    aboutHighlight2Title: '',
+    aboutHighlight2Desc: ''
   });
   const [skillsList, setSkillsList] = useState<Skill[]>([]);
   const [projectsList, setProjectsList] = useState<Project[]>([]);
   const [photographyList, setPhotographyList] = useState<PhotographyItem[]>([]);
-  const [contactForm, setContactForm] = useState<Contact>({ email: '', phone: '', address: '', github: '', linkedin: '', twitter: '', updatedAt: '' });
+  const [contactForm, setContactForm] = useState<Contact>({ email: '', phone: '', address: '', github: '', linkedin: '', twitter: '', facebook: '', updatedAt: '' });
 
   // CRUD working states
   const [skillForm, setSkillForm] = useState<{ id?: string; name: string; category: string; percentage: number }>({ name: '', category: 'Frontend', percentage: 80 });
@@ -180,7 +188,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     try {
       // 1. Fetch profile with fallbackToDefault=false to see if it exists
       const p = await fetchProfile(false);
-      setProfileForm(p);
+      setProfileForm({ ...DEFAULT_PROFILE, ...p });
     } catch (err: any) {
       if (err instanceof Error && err.message === "PROFILE_NOT_FOUND") {
         // Genuinely empty Firestore DB -> seed it with defaults!
@@ -188,7 +196,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
         try {
           await seedDatabase();
           const seededProfile = await fetchProfile(false);
-          setProfileForm(seededProfile);
+          setProfileForm({ ...DEFAULT_PROFILE, ...seededProfile });
         } catch (seedErr) {
           console.error("Failed to seed database:", seedErr);
           showStatus("Database seeding failed on startup.", "danger");
@@ -224,7 +232,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
 
     try {
       const c = await fetchContact(false);
-      setContactForm(c);
+      setContactForm({ ...DEFAULT_CONTACT, ...c });
     } catch (err: any) {
       if (err instanceof Error && err.message === "CONTACT_NOT_FOUND") {
         // Safe to ignore or wait for seed
@@ -914,6 +922,89 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                     placeholder="E.g., https://images.unsplash.com/... , https://images.unsplash.com/..."
                   />
                   <span className="text-[9px] text-slate-500 font-mono">Separate each image URL with a comma. These photos will be displayed nicely in your detailed About page.</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">Years of Experience</label>
+                    <input
+                      type="text"
+                      value={profileForm.aboutYearsExp || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, aboutYearsExp: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                      placeholder="E.g., 5+"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">Projects Completed</label>
+                    <input
+                      type="text"
+                      value={profileForm.aboutProjectsDone || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, aboutProjectsDone: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                      placeholder="E.g., 40+"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">Success Rate</label>
+                    <input
+                      type="text"
+                      value={profileForm.aboutSuccessRate || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, aboutSuccessRate: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                      placeholder="E.g., 99%"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  <div className="space-y-4 p-4 rounded-xl border border-slate-800 bg-slate-950/20">
+                    <h5 className="text-[10px] font-mono uppercase tracking-wider text-purple-400 font-bold">Highlight Accent 1</h5>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">Title</label>
+                      <input
+                        type="text"
+                        value={profileForm.aboutHighlight1Title || ''}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, aboutHighlight1Title: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                        placeholder="E.g., Advanced React Frameworks"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">Description</label>
+                      <input
+                        type="text"
+                        value={profileForm.aboutHighlight1Desc || ''}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, aboutHighlight1Desc: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                        placeholder="E.g., Highly proficient in Vite, Next.js..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 p-4 rounded-xl border border-slate-800 bg-slate-950/20">
+                    <h5 className="text-[10px] font-mono uppercase tracking-wider text-purple-400 font-bold">Highlight Accent 2</h5>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">Title</label>
+                      <input
+                        type="text"
+                        value={profileForm.aboutHighlight2Title || ''}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, aboutHighlight2Title: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                        placeholder="E.g., Cloud & Serverless"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-mono uppercase tracking-wider text-slate-400 block">Description</label>
+                      <input
+                        type="text"
+                        value={profileForm.aboutHighlight2Desc || ''}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, aboutHighlight2Desc: e.target.value }))}
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                        placeholder="E.g., Experienced in Firebase, Docker..."
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1639,7 +1730,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
               <div className="border-t border-slate-800/80 pt-6 space-y-6">
                 <h4 className="text-xs font-sans font-bold text-white uppercase tracking-wider text-purple-400">Social link registries</h4>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">GitHub profile</label>
                     <input
@@ -1670,6 +1761,17 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                       onChange={(e) => setContactForm(prev => ({ ...prev, twitter: e.target.value }))}
                       className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
                       placeholder="https://twitter.com/..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Facebook Profile</label>
+                    <input
+                      type="url"
+                      value={contactForm.facebook || ''}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, facebook: e.target.value }))}
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500 font-mono"
+                      placeholder="https://facebook.com/..."
                     />
                   </div>
                 </div>

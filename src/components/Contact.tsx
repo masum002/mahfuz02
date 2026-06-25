@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Mail, Phone, MapPin, Send, Github, Linkedin, Twitter, AlertCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Github, Linkedin, Twitter, AlertCircle, Facebook } from 'lucide-react';
 import { Contact } from '../types';
 
 interface ContactProps {
@@ -128,6 +128,16 @@ export default function ContactSection({ contact }: ContactProps) {
                     className="p-3.5 bg-slate-950 hover:bg-purple-600 rounded-xl border border-slate-800 text-slate-400 hover:text-white transition-all duration-300 transform hover:-translate-y-1 block"
                   >
                     <Twitter size={18} />
+                  </a>
+                )}
+                {contact.facebook && (
+                  <a
+                    href={contact.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3.5 bg-slate-950 hover:bg-purple-600 rounded-xl border border-slate-800 text-slate-400 hover:text-white transition-all duration-300 transform hover:-translate-y-1 block"
+                  >
+                    <Facebook size={18} />
                   </a>
                 )}
               </div>

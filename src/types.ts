@@ -26,6 +26,13 @@ export interface Profile {
   cvSignatureUrl?: string;
   aboutDetailText?: string;
   aboutImages?: string;
+  aboutYearsExp?: string;
+  aboutProjectsDone?: string;
+  aboutSuccessRate?: string;
+  aboutHighlight1Title?: string;
+  aboutHighlight1Desc?: string;
+  aboutHighlight2Title?: string;
+  aboutHighlight2Desc?: string;
 }
 
 export interface Skill {
@@ -55,6 +62,7 @@ export interface Contact {
   github: string;
   linkedin: string;
   twitter: string;
+  facebook?: string;
   updatedAt: string;
 }
 

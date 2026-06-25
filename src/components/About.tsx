@@ -5,9 +5,10 @@ import { Profile } from '../types';
 
 interface AboutProps {
   profile: Profile;
+  isDetailedTab?: boolean;
 }
 
-export default function About({ profile }: AboutProps) {
+export default function About({ profile, isDetailedTab = false }: AboutProps) {
   const [showDetailedAbout, setShowDetailedAbout] = useState(false);
 
   // Extract the comma separated images if present, otherwise fallback to standard default placeholder
@@ -18,6 +19,126 @@ export default function About({ profile }: AboutProps) {
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600",
         "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=600"
       ];
+
+  const yearsExp = profile.aboutYearsExp || "5+";
+  const projectsDone = profile.aboutProjectsDone || "40+";
+  const successRate = profile.aboutSuccessRate || "99%";
+  const highlight1Title = profile.aboutHighlight1Title || "Advanced React Frameworks";
+  const highlight1Desc = profile.aboutHighlight1Desc || "Highly proficient in Vite, Next.js, Framer Motion, Recharts, and Tailwind CSS.";
+  const highlight2Title = profile.aboutHighlight2Title || "Cloud & Serverless";
+  const highlight2Desc = profile.aboutHighlight2Desc || "Experienced in Firebase, Docker, Google Cloud Platform, and custom CI/CD pipelines.";
+
+  // If we are on the dedicated about page, render the full detailed view directly
+  if (isDetailedTab) {
+    return (
+      <section className="py-12 relative overflow-hidden bg-slate-950">
+        {/* Backdrop Glow design elements */}
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-900/10 rounded-full blur-[120px] pointer-events-none select-none" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-pink-900/10 rounded-full blur-[120px] pointer-events-none select-none" />
+
+        <div className="max-w-5xl w-full mx-auto px-6 py-6 space-y-12">
+          {/* Profile Intro Banner Card */}
+          <div className="relative p-6 sm:p-8 rounded-3xl bg-slate-900/40 border border-slate-800/80 overflow-hidden flex flex-col sm:flex-row gap-8 items-center">
+            <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-2xl overflow-hidden border border-slate-700 shadow-xl shrink-0 group">
+              <img
+                src={profile.avatarUrl || "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=600"}
+                alt={profile.name}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent" />
+            </div>
+
+            <div className="text-center sm:text-left space-y-3">
+              <span className="px-3 py-1 text-[10px] font-mono tracking-widest uppercase bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full inline-block">
+                {profile.title || "Lead Full-Stack & Cloud Engineer"}
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-sans tracking-tight font-black text-white">
+                {profile.name}
+              </h1>
+              <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
+                {profile.bio}
+              </p>
+            </div>
+          </div>
+
+          {/* Two columns: Detail text & Photos Showcase */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
+            {/* Detail Bio text */}
+            <div className="md:col-span-7 space-y-6">
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                <User size={16} className="text-purple-400" />
+                <h2 className="text-lg font-sans font-bold text-white uppercase tracking-wider">Detailed About Me</h2>
+              </div>
+
+              <div className="text-slate-300 text-sm leading-relaxed space-y-5 whitespace-pre-line">
+                {profile.aboutDetailText ? (
+                  profile.aboutDetailText.split('\n').map((para, index) => (
+                    <p key={index} className="text-slate-300">{para}</p>
+                  ))
+                ) : (
+                  <p className="text-slate-300">
+                    Mahfuz R Masum is a professional Lead Full-Stack & Cloud Engineer. He specializes in designing real-time system architectures, robust administrative controls, secure data layers, and cloud native microservice orchestrations.
+                  </p>
+                )}
+              </div>
+
+              {/* Quick summary highlights */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                <div className="p-4 rounded-xl bg-slate-900/20 border border-slate-850 flex gap-3 items-start">
+                  <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-bold text-white font-sans">{highlight1Title}</h4>
+                    <p className="text-[11px] text-slate-500 leading-normal mt-0.5">{highlight1Desc}</p>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-900/20 border border-slate-850 flex gap-3 items-start">
+                  <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-bold text-white font-sans">{highlight2Title}</h4>
+                    <p className="text-[11px] text-slate-500 leading-normal mt-0.5">{highlight2Desc}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Photo Gallery Showcase */}
+            <div className="md:col-span-5 space-y-6">
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                <Image size={16} className="text-purple-400" />
+                <h2 className="text-lg font-sans font-bold text-white uppercase tracking-wider">My Gallery</h2>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                {imagesList.map((imgUrl, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 15 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.15 }}
+                    className="relative aspect-video rounded-2xl overflow-hidden border border-slate-800 shadow-lg group bg-slate-950"
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={`Mahfuz Photo ${i + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-slate-950/10 group-hover:bg-transparent transition-colors" />
+                    <div className="absolute bottom-3 left-3 px-2 py-1 bg-slate-950/60 backdrop-blur-md rounded-lg border border-slate-800 text-[9px] font-mono text-slate-300">
+                      IMAGE_{String(i + 1).padStart(2, '0')}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="about" className="py-24 relative overflow-hidden bg-slate-950/60">
@@ -105,8 +226,10 @@ export default function About({ profile }: AboutProps) {
 
             <div className="pt-2">
               <button
-                onClick={() => setShowDetailedAbout(true)}
-                className="group relative inline-flex items-center gap-2.5 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl text-xs font-bold font-sans tracking-wider uppercase transition-all shadow-xl hover:shadow-purple-500/20 active:scale-95"
+                onClick={() => {
+                  window.location.hash = '#about';
+                }}
+                className="group relative inline-flex items-center gap-2.5 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl text-xs font-bold font-sans tracking-wider uppercase transition-all shadow-xl hover:shadow-purple-500/20 active:scale-95 cursor-pointer"
               >
                 <Sparkles size={14} className="animate-pulse" />
                 <span>Read More About Me</span>
@@ -118,7 +241,7 @@ export default function About({ profile }: AboutProps) {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 flex flex-col justify-center transform hover:scale-103 transition-transform duration-300">
                 <span className="text-3xl md:text-4xl font-mono font-extrabold text-white bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  5+
+                  {yearsExp}
                 </span>
                 <span className="text-xs md:text-sm font-sans text-slate-500 mt-1 uppercase tracking-wider font-semibold">
                   Years Experience
@@ -128,7 +251,7 @@ export default function About({ profile }: AboutProps) {
 
               <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 flex flex-col justify-center transform hover:scale-103 transition-transform duration-300">
                 <span className="text-3xl md:text-4xl font-mono font-extrabold text-white bg-gradient-to-r from-pink-400 to-blue-400 bg-clip-text text-transparent">
-                  40+
+                  {projectsDone}
                 </span>
                 <span className="text-xs md:text-sm font-sans text-slate-500 mt-1 uppercase tracking-wider font-semibold">
                   Projects Completed
@@ -138,7 +261,7 @@ export default function About({ profile }: AboutProps) {
 
               <div className="col-span-2 md:col-span-1 p-5 rounded-2xl bg-slate-900/40 border border-slate-800 flex flex-col justify-center transform hover:scale-103 transition-transform duration-300">
                 <span className="text-3xl md:text-4xl font-mono font-extrabold text-white bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  99%
+                  {successRate}
                 </span>
                 <span className="text-xs md:text-sm font-sans text-slate-500 mt-1 uppercase tracking-wider font-semibold">
                   Success Rate
@@ -150,7 +273,7 @@ export default function About({ profile }: AboutProps) {
         </div>
       </div>
 
-      {/* DETAILED ABOUT ME SUB-PAGE (Full Screen Modal Overlay) */}
+      {/* DETAILED ABOUT ME SUB-PAGE (Full Screen Modal Overlay - Fallback / Keep as legacy support) */}
       <AnimatePresence>
         {showDetailedAbout && (
           <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950 flex flex-col">
@@ -197,7 +320,7 @@ export default function About({ profile }: AboutProps) {
 
                 <div className="text-center sm:text-left space-y-3">
                   <span className="px-3 py-1 text-[10px] font-mono tracking-widest uppercase bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full inline-block">
-                    Lead Full-Stack & Cloud Engineer
+                    {profile.title || "Lead Full-Stack & Cloud Engineer"}
                   </span>
                   <h1 className="text-3xl sm:text-4xl font-sans tracking-tight font-black text-white">
                     {profile.name}
@@ -234,16 +357,16 @@ export default function About({ profile }: AboutProps) {
                     <div className="p-4 rounded-xl bg-slate-900/20 border border-slate-850 flex gap-3 items-start">
                       <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="text-xs font-bold text-white font-sans">Advanced React Frameworks</h4>
-                        <p className="text-[11px] text-slate-500 leading-normal mt-0.5">Highly proficient in Vite, Next.js, Framer Motion, Recharts, and Tailwind CSS.</p>
+                        <h4 className="text-xs font-bold text-white font-sans">{highlight1Title}</h4>
+                        <p className="text-[11px] text-slate-500 leading-normal mt-0.5">{highlight1Desc}</p>
                       </div>
                     </div>
 
                     <div className="p-4 rounded-xl bg-slate-900/20 border border-slate-850 flex gap-3 items-start">
                       <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="text-xs font-bold text-white font-sans">Cloud & Serverless</h4>
-                        <p className="text-[11px] text-slate-500 leading-normal mt-0.5">Experienced in Firebase, Docker, Google Cloud Platform, and custom CI/CD pipelines.</p>
+                        <h4 className="text-xs font-bold text-white font-sans">{highlight2Title}</h4>
+                        <p className="text-[11px] text-slate-500 leading-normal mt-0.5">{highlight2Desc}</p>
                       </div>
                     </div>
                   </div>
@@ -300,4 +423,3 @@ export default function About({ profile }: AboutProps) {
     </section>
   );
 }
-

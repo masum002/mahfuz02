@@ -24,8 +24,15 @@ export const DEFAULT_PROFILE: Profile = {
   cvGender: "Male",
   cvLanguages: "Bangla (Native), English (Professional)",
   cvObjective: "Professional and highly motivated Software Engineer with 3+ years of experience in full-stack web architecture, looking to deliver elegant, secure, and modern digital products while tackling intricate development challenges.",
-  aboutDetailText: "হ্যালো, আমি মাহফুজ আর মাসুম (MAHFUZ R MASUM)। একজন প্যাশনেট এবং সার্টিফাইড Lead Full-Stack & Cloud Engineer। আমি বিগত কয়েক বছর ধরে রিয়্যাক্ট (React), টাইপস্ক্রিপ্ট (TypeScript), নোড জেএস (Node.js) এবং ক্লাউড কম্পিউটিং টেকনোলজি নিয়ে কাজ করছি।\n\nআমার মূল লক্ষ্য হলো যেকোনো জটিল বিজনেস রিকোয়ারমেন্টস এবং আর্কিটেকচারকে একটি দৃষ্টিনন্দন, অত্যন্ত দ্রুতগতিসম্পন্ন এবং স্কেলেবল ডিজিটাল অ্যাপ্লিকেশনে রূপান্তর করা। আমি প্রতিনিয়ত আধুনিক ওয়েব ট্রেন্ডস এবং সিকিউরিটি স্ট্যান্ডার্ডস অনুসরণ করে কোড লিখে থাকি।\n\nআমার কাজের অভিজ্ঞতা শুধু ফ্রন্টএন্ড ডিজাইনেই সীমাবদ্ধ নয়, বরং নোড জেএস মাইক্রোসার্ভিসেস, ক্লাউড নেটিভ ডেপ্লয়মেন্টস (GCP, Docker, Kubernetes) এবং সিকিউর ডেটাবেস অপ্টিমাইজেশন নিয়েও আমি সমানভাবে কাজ করি। প্রতিটি প্রজেক্টে পিক্সেল-পারফেক্ট ইউজার এক্সপেরিয়েন্স এবং ফ্ললেস অ্যানিমেশন যুক্ত করতে আমি দারুণ ভালোবাসি।",
-  aboutImages: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600,https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=600,https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=600"
+  aboutDetailText: "হ্যালো, আমি মাহফুজ আর মাসুম (MAHFUZ R MASUM)। একজন প্যাশনেট এবং সার্টিফাইড Lead Full-Stack & Cloud Engineer। আমি বিগত কয়েক বছর ধরে রিয়্যাক্ট (React), টাইপস্ক্রিপ্ট (TypeScript), নোড জেএস (Node.js) এবং ক্লাউড কম্পিউটিং টেকনোলজি নিয়ে কাজ করছি।\n\nআমার মূল লক্ষ্য হলো যেকোনো জটিল বিজনেস রিকোয়ারমেন্টস এবং আর্কিটেকচারকে একটি দৃষ্টিনন্দন, অত্যন্ত দ্রুতগতিসম্পন্ন এবং স্কেলেবল ডিজিটাল অ্যাপ্লিকেশনে রূপান্তর করা। আমি প্রতিনিয়ত আধুনিক ওয়েব ট্রেন্ডস এবং সিকিউরিটি স্ট্যান্ডার্ডস অনুসরণ করে কোড লিখে থাকি।\n\nআমার কাজের অভিজ্ঞতা শুধু ফ্রন্টএন্ড ডিজাইনেই সীমাবদ্ধ নয়, বরং নোড জেএস মাইক্রোসার্ভিসেস, ক্লাউড নেটিভ ডেপ্লয়মেন্টস (GCP, Docker, Kubernetes) এবং সিকিউর ডেটাবেস অপ্টিমাইজেশন নিয়েও আমি সমানভাবে কাজ করি। প্রতিটি প্রজেক্টে পিক্সেল-পারফেক্ট ইউজার এক্সপেরিয়েন্স এবং ফ্লлеস অ্যানিমেশন যুক্ত করতে আমি দারুণ ভালোবাসি।",
+  aboutImages: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600,https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=600,https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=600",
+  aboutYearsExp: "5+",
+  aboutProjectsDone: "40+",
+  aboutSuccessRate: "99%",
+  aboutHighlight1Title: "Advanced React Frameworks",
+  aboutHighlight1Desc: "Highly proficient in Vite, Next.js, Framer Motion, Recharts, and Tailwind CSS.",
+  aboutHighlight2Title: "Cloud & Serverless",
+  aboutHighlight2Desc: "Experienced in Firebase, Docker, Google Cloud Platform, and custom CI/CD pipelines."
 };
 
 export const DEFAULT_SKILLS: Skill[] = [
@@ -83,6 +90,7 @@ export const DEFAULT_CONTACT: Contact = {
   github: "https://github.com/mahfujar003",
   linkedin: "https://linkedin.com/in/mahfujar003",
   twitter: "https://twitter.com/mahfujar003",
+  facebook: "https://facebook.com/mahfujar003",
   updatedAt: new Date().toISOString()
 };
 

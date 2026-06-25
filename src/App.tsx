@@ -730,7 +730,7 @@ export default function App() {
                 </div>
               )}
               {currentTab === 'about' && profile && (
-                <About profile={profile} />
+                <About profile={profile} isDetailedTab={true} />
               )}
               {currentTab === 'skills' && skills.length > 0 && (
                 <Skills skills={skills} />
