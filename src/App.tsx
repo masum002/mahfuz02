@@ -41,6 +41,7 @@ import ContactSection from './components/Contact';
 import AdminPanel from './components/AdminPanel';
 import ProjectDetailPage from './components/ProjectDetailPage';
 import PhotographyDetailPage from './components/PhotographyDetailPage';
+import { navigateTo } from './navigation';
 
 export default function App() {
   // Safe initialization of view based on query parameters (?view=admin, ?portal=secure, ?admin=true, or ?secret=admin)
@@ -324,29 +325,46 @@ export default function App() {
     document.title = title;
   }, [currentView, currentTab, activeProjectId, activePhotoId, projects, photographyList]);
 
-  // High speed multi-page URL hash listener
+  // High speed multi-page URL route and hash listener
   useEffect(() => {
-    const handleHashChange = () => {
+    const handleRouteChange = () => {
+      const path = window.location.pathname;
       const hash = window.location.hash;
-      if (hash.startsWith('#/project/')) {
+
+      if (path.startsWith('/project/')) {
+        const id = path.replace('/project/', '').replace(/\/$/, '');
+        setActiveProjectId(id);
+        setActivePhotoId(null);
+        setCurrentView('project-detail');
+      } else if (path.startsWith('/projects/')) {
+        const id = path.replace('/projects/', '').replace(/\/$/, '');
+        setActiveProjectId(id);
+        setActivePhotoId(null);
+        setCurrentView('project-detail');
+      } else if (hash.startsWith('#/project/')) {
         const id = hash.replace('#/project/', '');
         setActiveProjectId(id);
         setActivePhotoId(null);
         setCurrentView('project-detail');
+      } else if (path.startsWith('/photography/')) {
+        const id = path.replace('/photography/', '').replace(/\/$/, '');
+        setActivePhotoId(id);
+        setActiveProjectId(null);
+        setCurrentView('photography-detail');
       } else if (hash.startsWith('#/photography/')) {
         const id = hash.replace('#/photography/', '');
         setActivePhotoId(id);
         setActiveProjectId(null);
         setCurrentView('photography-detail');
-      } else if (hash === '#/admin' || hash === '#admin') {
+      } else if (path === '/admin' || path === '/admin/' || hash === '#/admin' || hash === '#admin') {
         setCurrentView('admin');
         setActiveProjectId(null);
         setActivePhotoId(null);
       } else {
         setActiveProjectId(null);
         setActivePhotoId(null);
-        
-        // Use URLSearchParams or defaults
+
+        // Check if there is an admin param in search queries
         const params = new URLSearchParams(window.location.search);
         const isParamAdmin = params.get('view') === 'admin' || 
                              params.get('portal') === 'secure' || 
@@ -354,16 +372,43 @@ export default function App() {
                              params.get('secret') === 'admin';
         setCurrentView(isParamAdmin ? 'admin' : 'portfolio');
 
-        const sectionId = hash.replace('#/', '').replace('#', '');
-        if (['home', 'about', 'skills', 'projects', 'photography', 'contact'].includes(sectionId)) {
-          setCurrentTab(sectionId as any);
+        // Check pathname mapping first, then hash mapping
+        let routeTab = '';
+        const normalizedPath = path.replace(/\/$/, ''); // remove trailing slash
+        
+        if (normalizedPath === '/about') {
+          routeTab = 'about';
+        } else if (normalizedPath === '/skills') {
+          routeTab = 'skills';
+        } else if (normalizedPath === '/projects') {
+          routeTab = 'projects';
+        } else if (normalizedPath === '/photography') {
+          routeTab = 'photography';
+        } else if (normalizedPath === '/contact') {
+          routeTab = 'contact';
+        } else if (normalizedPath === '/' || normalizedPath === '/home') {
+          routeTab = 'home';
         }
+
+        // Fallback to hash mapping if pathname didn't specify a section tab
+        if (!routeTab && hash) {
+          const sectionId = hash.replace('#/', '').replace('#', '');
+          if (['home', 'about', 'skills', 'projects', 'photography', 'contact'].includes(sectionId)) {
+            routeTab = sectionId;
+          }
+        }
+
+        setCurrentTab((routeTab || 'home') as any);
       }
     };
 
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    handleRouteChange();
+    window.addEventListener('popstate', handleRouteChange);
+    window.addEventListener('hashchange', handleRouteChange);
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+      window.removeEventListener('hashchange', handleRouteChange);
+    };
   }, []);
 
   const handleNavigateToContact = () => {
@@ -439,8 +484,7 @@ export default function App() {
           {/* Logo element with premium, custom MAHFUZ styling - SEO Optimized anchor role */}
           <div 
             onClick={() => {
-              setCurrentView('portfolio');
-              setCurrentTab('home');
+              navigateTo('/home');
             }}
             aria-label="Mahfuz R Masum Portfolio Logo Home"
             className="flex items-center gap-2.5 text-white font-sans select-none cursor-pointer group"
@@ -467,7 +511,7 @@ export default function App() {
               <ul className="flex items-center gap-7 text-xs font-mono text-slate-450 uppercase tracking-widest font-semibold">
                 <li>
                   <button 
-                    onClick={() => { window.location.hash = '#home'; }}
+                    onClick={() => { navigateTo('/home'); }}
                     title="Go to Home section"
                     aria-label="Home Navigation Tab"
                     className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentView === 'portfolio' && currentTab === 'home' ? 'text-purple-400 font-bold scale-105' : ''}`}
@@ -480,7 +524,7 @@ export default function App() {
                 </li>
                 <li>
                   <button 
-                    onClick={() => { window.location.hash = '#about'; }}
+                    onClick={() => { navigateTo('/about'); }}
                     title="Read about Mahfuz's story and vision"
                     aria-label="About Navigation Tab"
                     className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentView === 'portfolio' && currentTab === 'about' ? 'text-purple-400 font-bold scale-105' : ''}`}
@@ -493,7 +537,7 @@ export default function App() {
                 </li>
                 <li>
                   <button 
-                    onClick={() => { window.location.hash = '#skills'; }}
+                    onClick={() => { navigateTo('/skills'); }}
                     title="View technical skills and expertise stack"
                     aria-label="Skills Navigation Tab"
                     className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentView === 'portfolio' && currentTab === 'skills' ? 'text-purple-400 font-bold scale-105' : ''}`}
@@ -506,7 +550,7 @@ export default function App() {
                 </li>
                 <li>
                   <button 
-                    onClick={() => { window.location.hash = '#projects'; }}
+                    onClick={() => { navigateTo('/projects'); }}
                     title="Browse development projects and details"
                     aria-label="Projects Navigation Tab"
                     className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentView === 'portfolio' && currentTab === 'projects' ? 'text-purple-400 font-bold scale-105' : ''}`}
@@ -519,7 +563,7 @@ export default function App() {
                 </li>
                 <li>
                   <button 
-                    onClick={() => { window.location.hash = '#photography'; }}
+                    onClick={() => { navigateTo('/photography'); }}
                     title="View photography exhibition and SEO camera settings guide"
                     aria-label="Photography Exhibition Navigation Tab"
                     className={`transition-all relative py-1 hover:text-white cursor-pointer ${currentView === 'portfolio' && currentTab === 'photography' ? 'text-purple-400 font-bold scale-105' : ''}`}
@@ -535,7 +579,7 @@ export default function App() {
           ) : (
             <button 
               onClick={() => {
-                window.location.hash = '#home';
+                navigateTo('/home');
               }}
               className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-xl text-xs font-mono font-semibold uppercase tracking-wider transition-all cursor-pointer"
             >
@@ -593,7 +637,7 @@ export default function App() {
                 <>
                   <button 
                     onClick={() => {
-                      window.location.hash = '#home';
+                      navigateTo('/home');
                       setMobileMenuOpen(false);
                     }} 
                     className={`text-left py-2 hover:text-white border-b border-transparent ${currentView === 'portfolio' && currentTab === 'home' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
@@ -602,7 +646,7 @@ export default function App() {
                   </button>
                   <button 
                     onClick={() => {
-                      window.location.hash = '#about';
+                      navigateTo('/about');
                       setMobileMenuOpen(false);
                     }} 
                     className={`text-left py-2 hover:text-white border-b border-transparent ${currentView === 'portfolio' && currentTab === 'about' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
@@ -611,7 +655,7 @@ export default function App() {
                   </button>
                   <button 
                     onClick={() => {
-                      window.location.hash = '#skills';
+                      navigateTo('/skills');
                       setMobileMenuOpen(false);
                     }} 
                     className={`text-left py-2 hover:text-white border-b border-transparent ${currentView === 'portfolio' && currentTab === 'skills' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
@@ -620,7 +664,7 @@ export default function App() {
                   </button>
                   <button 
                     onClick={() => {
-                      window.location.hash = '#projects';
+                      navigateTo('/projects');
                       setMobileMenuOpen(false);
                     }} 
                     className={`text-left py-2 hover:text-white border-b border-transparent ${currentView === 'portfolio' && currentTab === 'projects' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
@@ -629,7 +673,7 @@ export default function App() {
                   </button>
                   <button 
                     onClick={() => {
-                      window.location.hash = '#photography';
+                      navigateTo('/photography');
                       setMobileMenuOpen(false);
                     }} 
                     className={`text-left py-2 hover:text-white border-b border-transparent ${currentView === 'portfolio' && currentTab === 'photography' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
@@ -638,7 +682,7 @@ export default function App() {
                   </button>
                   <button 
                     onClick={() => {
-                      window.location.hash = '#contact';
+                      navigateTo('/contact');
                       setMobileMenuOpen(false);
                     }} 
                     className={`text-left py-2 hover:text-white border-b border-transparent ${currentView === 'portfolio' && currentTab === 'contact' ? 'text-purple-400 font-bold border-purple-500/30' : ''}`}
@@ -662,7 +706,7 @@ export default function App() {
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      window.location.hash = '#home';
+                      navigateTo('/home');
                     }}
                     className="w-full py-3.5 bg-slate-900 border border-slate-800 text-slate-300 rounded-xl text-center font-semibold flex items-center justify-center gap-2"
                   >
@@ -772,12 +816,12 @@ export default function App() {
                   <div className="space-y-4 md:pl-12">
                     <h5 className="text-[10px] font-mono uppercase tracking-widest text-slate-550 font-bold">DIRECTORY INDEX</h5>
                     <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-                      <button onClick={() => { setCurrentTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">🏠 Home</button>
-                      <button onClick={() => { setCurrentTab('about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">✨ About me</button>
-                      <button onClick={() => { setCurrentTab('skills'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">📊 Skills</button>
-                      <button onClick={() => { setCurrentTab('projects'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">💼 Projects</button>
-                      <button onClick={() => { setCurrentTab('photography'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">📸 Photography</button>
-                      <button onClick={() => { setCurrentTab('contact'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-purple-400 text-left transition-colors cursor-pointer">📨 Contact</button>
+                      <button onClick={() => navigateTo('/home')} className="hover:text-purple-400 text-left transition-colors cursor-pointer">🏠 Home</button>
+                      <button onClick={() => navigateTo('/about')} className="hover:text-purple-400 text-left transition-colors cursor-pointer">✨ About me</button>
+                      <button onClick={() => navigateTo('/skills')} className="hover:text-purple-400 text-left transition-colors cursor-pointer">📊 Skills</button>
+                      <button onClick={() => navigateTo('/projects')} className="hover:text-purple-400 text-left transition-colors cursor-pointer">💼 Projects</button>
+                      <button onClick={() => navigateTo('/photography')} className="hover:text-purple-400 text-left transition-colors cursor-pointer">📸 Photography</button>
+                      <button onClick={() => navigateTo('/contact')} className="hover:text-purple-400 text-left transition-colors cursor-pointer">📨 Contact</button>
                     </div>
                   </div>
                 </div>
@@ -811,10 +855,10 @@ export default function App() {
                     project={matchedProject}
                     allProjects={projects}
                     onBack={() => {
-                      window.location.hash = '#projects';
+                      navigateTo('/projects');
                     }}
                     onNavigateToProject={(id) => {
-                      window.location.hash = `#/project/${id}`;
+                      navigateTo(`/project/${id}`);
                     }}
                   />
                 );
@@ -824,7 +868,7 @@ export default function App() {
                     <h2 className="text-xl font-bold text-slate-300">Project Not Found</h2>
                     <p className="text-sm text-slate-550 mt-2">The project link might be outdated or invalid.</p>
                     <button 
-                      onClick={() => { window.location.hash = '#home'; }}
+                      onClick={() => { navigateTo('/home'); }}
                       className="mt-6 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-all shadow-md"
                     >
                       Back to Home
@@ -851,10 +895,10 @@ export default function App() {
                     photo={matchedPhoto}
                     allPhotos={photographyList}
                     onBack={() => {
-                      window.location.hash = '#photography';
+                      navigateTo('/photography');
                     }}
                     onNavigateToPhoto={(id) => {
-                      window.location.hash = `#/photography/${id}`;
+                      navigateTo(`/photography/${id}`);
                     }}
                   />
                 );
@@ -864,7 +908,7 @@ export default function App() {
                     <h2 className="text-xl font-bold text-slate-300">Photo Capture Not Found</h2>
                     <p className="text-sm text-slate-550 mt-2">The photography link might be outdated or invalid.</p>
                     <button 
-                      onClick={() => { window.location.hash = '#home'; }}
+                      onClick={() => { navigateTo('/home'); }}
                       className="mt-6 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-all shadow-md"
                     >
                       Back to Home

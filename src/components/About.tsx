@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Terminal, Code2, Globe2, X, Sparkles, Image, CheckCircle } from 'lucide-react';
 import { Profile } from '../types';
+import { navigateTo } from '../navigation';
 
 interface AboutProps {
   profile: Profile;
@@ -227,7 +228,7 @@ export default function About({ profile, isDetailedTab = false }: AboutProps) {
             <div className="pt-2">
               <button
                 onClick={() => {
-                  window.location.hash = '#about';
+                  navigateTo('/about');
                 }}
                 className="group relative inline-flex items-center gap-2.5 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl text-xs font-bold font-sans tracking-wider uppercase transition-all shadow-xl hover:shadow-purple-500/20 active:scale-95 cursor-pointer"
               >

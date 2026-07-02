@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Briefcase, ExternalLink, Github, Terminal, ChevronLeft, ChevronRight, Play, Pause, Info, X } from 'lucide-react';
 import { Project } from '../types';
+import { navigateTo } from '../navigation';
 
 interface ProjectsProps {
   projects: Project[];
@@ -176,7 +177,7 @@ export default function Projects({ projects }: ProjectsProps) {
                     if (!isActive) {
                       setActiveIndex(i);
                     } else {
-                      window.location.hash = `#/project/${proj.id || i}`;
+                      navigateTo(`/project/${proj.id || i}`);
                     }
                   }}
                   className={`absolute w-full max-w-[270px] sm:max-w-[340px] md:max-w-[395px] rounded-3xl overflow-hidden flex flex-col justify-between shadow-2xl transition-all duration-300 transform-gpu cursor-pointer ${
@@ -210,7 +211,7 @@ export default function Projects({ projects }: ProjectsProps) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            window.location.hash = `#/project/${proj.id || i}`;
+                            navigateTo(`/project/${proj.id || i}`);
                           }}
                           className="px-4 py-2 rounded-full bg-purple-600 border border-purple-500 text-white font-sans text-xs font-bold hover:bg-purple-500 hover:scale-105 active:scale-95 transition-all shadow-md flex items-center gap-1.5"
                         >

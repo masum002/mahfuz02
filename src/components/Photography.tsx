@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Camera, MapPin, Sliders, ChevronLeft, ChevronRight, Play, Pause, Compass, Focus } from 'lucide-react';
 import { PhotographyItem } from '../types';
+import { navigateTo } from '../navigation';
 
 interface PhotographyProps {
   photos: PhotographyItem[];
@@ -141,7 +142,7 @@ export default function Photography({ photos }: PhotographyProps) {
                  exit="exit"
                  onClick={() => {
                    if (activePhoto.id) {
-                     window.location.hash = `#/photography/${activePhoto.id}`;
+                     navigateTo(`/photography/${activePhoto.id}`);
                    }
                  }}
                  className="absolute inset-0 w-full h-full rounded-2xl sm:rounded-3xl border border-slate-800 bg-slate-900/60 p-2 overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.85)] flex items-center justify-center transform-gpu cursor-pointer group"
@@ -216,7 +217,7 @@ export default function Photography({ photos }: PhotographyProps) {
                     <button
                       onClick={() => {
                         if (activePhoto.id) {
-                          window.location.hash = `#/photography/${activePhoto.id}`;
+                          navigateTo(`/photography/${activePhoto.id}`);
                         }
                       }}
                       className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-sans text-xs font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-1.5"
