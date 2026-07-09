@@ -295,9 +295,10 @@ export default function App() {
     setMobileMenuOpen(false); // Close mobile navigation if open
   }, [currentTab, currentView]);
 
-  // Dynamic SEO Page Title Manager
+  // Dynamic SEO Page Title & Meta Tags Manager
   useEffect(() => {
     let title = "Mahfuz R Masum | Lead Full-Stack & Cloud Engineer | Professional Portfolio";
+    let path = "/";
 
     if (currentView === 'project-detail' && activeProjectId) {
       const matchedProject = projects.find((p, idx) => p.id === activeProjectId || String(idx) === activeProjectId);
@@ -306,6 +307,7 @@ export default function App() {
       } else {
         title = "Project Details | Mahfuz R Masum";
       }
+      path = `/project/${activeProjectId}`;
     } else if (currentView === 'photography-detail' && activePhotoId) {
       const matchedPhoto = photographyList.find((p, idx) => p.id === activePhotoId || String(idx) === activePhotoId);
       if (matchedPhoto) {
@@ -313,16 +315,51 @@ export default function App() {
       } else {
         title = "Photography Capture | Mahfuz R Masum";
       }
+      path = `/photography/${activePhotoId}`;
     } else if (currentView === 'admin') {
       title = "Admin Panel | Portfolio Control Center - Mahfuz R Masum";
+      path = "/admin";
     } else if (currentView === 'portfolio') {
       const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
       if (currentTab !== 'home') {
         title = `${capitalize(currentTab)} | Mahfuz R Masum - Lead Full-Stack & Cloud Engineer`;
+        path = `/${currentTab}`;
+      } else {
+        path = "/";
       }
     }
 
     document.title = title;
+
+    // Dynamic Canonical & OpenGraph URL updates
+    const fullUrl = `https://mahfuz62.pro.bd${path}`;
+
+    // 1. Canonical Link
+    let canonicalEl = document.querySelector('link[rel="canonical"]');
+    if (!canonicalEl) {
+      canonicalEl = document.createElement('link');
+      canonicalEl.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonicalEl);
+    }
+    canonicalEl.setAttribute('href', fullUrl);
+
+    // 2. OpenGraph URL
+    let ogUrlEl = document.querySelector('meta[property="og:url"]');
+    if (!ogUrlEl) {
+      ogUrlEl = document.createElement('meta');
+      ogUrlEl.setAttribute('property', 'og:url');
+      document.head.appendChild(ogUrlEl);
+    }
+    ogUrlEl.setAttribute('content', fullUrl);
+
+    // 3. Twitter URL
+    let twitterUrlEl = document.querySelector('meta[name="twitter:url"]');
+    if (!twitterUrlEl) {
+      twitterUrlEl = document.createElement('meta');
+      twitterUrlEl.setAttribute('name', 'twitter:url');
+      document.head.appendChild(twitterUrlEl);
+    }
+    twitterUrlEl.setAttribute('content', fullUrl);
   }, [currentView, currentTab, activeProjectId, activePhotoId, projects, photographyList]);
 
   // High speed multi-page URL route and hash listener
