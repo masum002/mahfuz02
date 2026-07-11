@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Briefcase, ExternalLink, Github, Terminal, ChevronLeft, ChevronRight, Play, Pause, Info, X } from 'lucide-react';
 import { Project } from '../types';
 import { navigateTo } from '../navigation';
+import SEO from './SEO';
 
 interface ProjectsProps {
   projects: Project[];
@@ -13,6 +14,8 @@ export default function Projects({ projects }: ProjectsProps) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+  const isProjectsRoute = typeof window !== 'undefined' && (window.location.pathname === '/projects' || window.location.pathname === '/projects/');
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -123,6 +126,13 @@ export default function Projects({ projects }: ProjectsProps) {
 
   return (
     <section id="projects" className="py-24 relative overflow-hidden bg-slate-950/40">
+      {isProjectsRoute && (
+        <SEO 
+          title="Projects Portfolio" 
+          description="Explore professional enterprise apps, full-stack microservices, and interactive developer tooling designed and built by Mahfuz R Masum." 
+          path="/projects" 
+        />
+      )}
       {/* Decorative backdrop light mesh items */}
       <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[350px] h-[350px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[350px] h-[350px] bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />

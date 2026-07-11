@@ -2,12 +2,15 @@ import { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Layers, CheckCircle2, Award } from 'lucide-react';
 import { Skill } from '../types';
+import SEO from './SEO';
 
 interface SkillsProps {
   skills: Skill[];
 }
 
 export default function Skills({ skills }: SkillsProps) {
+  const isSkillsRoute = typeof window !== 'undefined' && (window.location.pathname === '/skills' || window.location.pathname === '/skills/');
+
   // Available filter tags
   const categories = useMemo(() => {
     const list = new Set(skills.map(s => s.category));
@@ -23,6 +26,13 @@ export default function Skills({ skills }: SkillsProps) {
 
   return (
     <section id="skills" className="py-24 relative overflow-hidden bg-slate-900/40">
+      {isSkillsRoute && (
+        <SEO 
+          title="Skills & Expertise" 
+          description="View the core technical competencies, programming languages, system architectures, and frameworks mastered by Mahfuz R Masum." 
+          path="/skills" 
+        />
+      )}
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex flex-col items-center text-center mb-16">
           <motion.div

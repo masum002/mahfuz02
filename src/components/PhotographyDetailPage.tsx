@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { ArrowLeft, MapPin, Sliders, Focus, Compass, ChevronLeft, ChevronRight, Share2, Calendar } from 'lucide-react';
 import { PhotographyItem } from '../types';
+import SEO from './SEO';
 
 interface PhotographyDetailPageProps {
   photo: PhotographyItem;
@@ -28,6 +29,11 @@ export default function PhotographyDetailPage({
       transition={{ duration: 0.5 }}
       className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24 relative overflow-hidden"
     >
+      <SEO 
+        title={`${photo.title} | Photography Exhibition`} 
+        description={photo.description || `Exquisite photography print: ${photo.title}. Shot at ${photo.location || "exquisite locations"}.`} 
+        path={`/photography/${photo.id}`} 
+      />
       {/* Deep blurred backdrop mesh of the photo itself for cinematic atmospheric immersion */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-25">
         <img

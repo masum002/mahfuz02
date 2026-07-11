@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Camera, MapPin, Sliders, ChevronLeft, ChevronRight, Play, Pause, Compass, Focus } from 'lucide-react';
 import { PhotographyItem } from '../types';
 import { navigateTo } from '../navigation';
+import SEO from './SEO';
 
 interface PhotographyProps {
   photos: PhotographyItem[];
@@ -13,6 +14,8 @@ export default function Photography({ photos }: PhotographyProps) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [direction, setDirection] = useState(0); // -1 for prev, 1 for next
   const [hovered, setHovered] = useState(false);
+
+  const isPhotographyRoute = typeof window !== 'undefined' && (window.location.pathname === '/photography' || window.location.pathname === '/photography/');
 
   useEffect(() => {
     if (!isPlaying || hovered || !photos || photos.length <= 1) return;
@@ -88,6 +91,13 @@ export default function Photography({ photos }: PhotographyProps) {
 
   return (
     <section id="photography" className="py-24 relative overflow-hidden bg-slate-950 border-t border-slate-900">
+      {isPhotographyRoute && (
+        <SEO 
+          title="Photography Capture" 
+          description="Explore dynamic landscapes, cityscape captures, and human-interest portraits taken from the creative lens of Mahfuz R Masum." 
+          path="/photography" 
+        />
+      )}
       {/* Dynamic blurred backdrop layer representing active photo colors for deep atmospheric immersion */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-20 transition-all duration-1000 ease-in-out">
         <img

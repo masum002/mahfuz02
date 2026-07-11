@@ -42,6 +42,7 @@ import AdminPanel from './components/AdminPanel';
 import ProjectDetailPage from './components/ProjectDetailPage';
 import PhotographyDetailPage from './components/PhotographyDetailPage';
 import { navigateTo } from './navigation';
+import SEO from './components/SEO';
 
 export default function App() {
   // Safe initialization of view based on query parameters (?view=admin, ?portal=secure, ?admin=true, or ?secret=admin)
@@ -330,36 +331,6 @@ export default function App() {
     }
 
     document.title = title;
-
-    // Dynamic Canonical & OpenGraph URL updates
-    const fullUrl = `https://mahfuz62.pro.bd${path}`;
-
-    // 1. Canonical Link
-    let canonicalEl = document.querySelector('link[rel="canonical"]');
-    if (!canonicalEl) {
-      canonicalEl = document.createElement('link');
-      canonicalEl.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonicalEl);
-    }
-    canonicalEl.setAttribute('href', fullUrl);
-
-    // 2. OpenGraph URL
-    let ogUrlEl = document.querySelector('meta[property="og:url"]');
-    if (!ogUrlEl) {
-      ogUrlEl = document.createElement('meta');
-      ogUrlEl.setAttribute('property', 'og:url');
-      document.head.appendChild(ogUrlEl);
-    }
-    ogUrlEl.setAttribute('content', fullUrl);
-
-    // 3. Twitter URL
-    let twitterUrlEl = document.querySelector('meta[name="twitter:url"]');
-    if (!twitterUrlEl) {
-      twitterUrlEl = document.createElement('meta');
-      twitterUrlEl.setAttribute('name', 'twitter:url');
-      document.head.appendChild(twitterUrlEl);
-    }
-    twitterUrlEl.setAttribute('content', fullUrl);
   }, [currentView, currentTab, activeProjectId, activePhotoId, projects, photographyList]);
 
   // High speed multi-page URL route and hash listener
@@ -771,6 +742,7 @@ export default function App() {
             <div>
               {currentTab === 'home' && profile && (
                 <div className="space-y-16">
+                  <SEO path="/" />
                   <Hero 
                     profile={profile} 
                     contact={contact}
@@ -964,6 +936,7 @@ export default function App() {
             transition={{ duration: 0.5 }}
             className="pt-20"
           >
+            <SEO title="Admin Control Center" path="/admin" />
             <AdminPanel onDataChange={loadPortfolioData} />
           </motion.div>
         )}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Mail, Phone, MapPin, Send, Github, Linkedin, Twitter, AlertCircle, Facebook } from 'lucide-react';
 import { Contact } from '../types';
+import SEO from './SEO';
 
 interface ContactProps {
   contact: Contact;
@@ -11,6 +12,8 @@ export default function ContactSection({ contact }: ContactProps) {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const isContactRoute = typeof window !== 'undefined' && (window.location.pathname === '/contact' || window.location.pathname === '/contact/');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +30,13 @@ export default function ContactSection({ contact }: ContactProps) {
 
   return (
     <section id="contact" className="py-24 relative overflow-hidden bg-slate-900/10">
+      {isContactRoute && (
+        <SEO 
+          title="Contact Me" 
+          description="Get in touch with Mahfuz R Masum. Connect for enterprise cloud solutions, full-stack development consultations, and contract software engineering opportunities." 
+          path="/contact" 
+        />
+      )}
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex flex-col items-center text-center mb-16">
           <motion.div

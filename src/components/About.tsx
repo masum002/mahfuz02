@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { User, Terminal, Code2, Globe2, X, Sparkles, Image, CheckCircle } from 'lucide-react';
 import { Profile } from '../types';
 import { navigateTo } from '../navigation';
+import SEO from './SEO';
 
 interface AboutProps {
   profile: Profile;
@@ -33,6 +34,7 @@ export default function About({ profile, isDetailedTab = false }: AboutProps) {
   if (isDetailedTab) {
     return (
       <section className="py-12 relative overflow-hidden bg-slate-950">
+        <SEO title="About Me" description="Discover Mahfuz's development philosophy, specialized tech stack, professional timeline, and technical education background." path="/about" />
         {/* Backdrop Glow design elements */}
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-900/10 rounded-full blur-[120px] pointer-events-none select-none" />
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-pink-900/10 rounded-full blur-[120px] pointer-events-none select-none" />

@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { ArrowLeft, ExternalLink, Github, Calendar, ShieldCheck, Cpu, ChevronRight } from 'lucide-react';
 import { Project } from '../types';
+import SEO from './SEO';
 
 interface ProjectDetailPageProps {
   project: Project;
@@ -28,6 +29,11 @@ export default function ProjectDetailPage({
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24"
     >
+      <SEO 
+        title={`${project.title} | Projects`} 
+        description={project.description} 
+        path={`/project/${project.id}`} 
+      />
       {/* Dynamic light accent ambient glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[400px] bg-gradient-to-b from-purple-500/10 via-blue-500/5 to-transparent blur-3xl pointer-events-none z-0" />
       
