@@ -1,4 +1,36 @@
 {
+  "headers": [
+    {
+      "source": "/about",
+      "headers": [
+        { "key": "Link", "value": "<https://mahfuz62.pro.bd/about>; rel=\"canonical\"" }
+      ]
+    },
+    {
+      "source": "/projects",
+      "headers": [
+        { "key": "Link", "value": "<https://mahfuz62.pro.bd/projects>; rel=\"canonical\"" }
+      ]
+    },
+    {
+      "source": "/contact",
+      "headers": [
+        { "key": "Link", "value": "<https://mahfuz62.pro.bd/contact>; rel=\"canonical\"" }
+      ]
+    },
+    {
+      "source": "/skills",
+      "headers": [
+        { "key": "Link", "value": "<https://mahfuz62.pro.bd/skills>; rel=\"canonical\"" }
+      ]
+    },
+    {
+      "source": "/photography",
+      "headers": [
+        { "key": "Link", "value": "<https://mahfuz62.pro.bd/photography>; rel=\"canonical\"" }
+      ]
+    }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
