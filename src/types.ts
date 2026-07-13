@@ -33,6 +33,15 @@ export interface Profile {
   aboutHighlight1Desc?: string;
   aboutHighlight2Title?: string;
   aboutHighlight2Desc?: string;
+  aboutAcademicEn?: string;
+  aboutAcademicBn?: string;
+  aboutAcademicMetrics?: string;
+  aboutSpecFront?: string;
+  aboutSpecBack?: string;
+  aboutSpecCloud?: string;
+  aboutVisionsEn?: string;
+  aboutVisionsBn?: string;
+  aboutVisionsList?: string;
 }
 
 export interface Skill {

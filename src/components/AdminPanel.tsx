@@ -101,7 +101,16 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
     aboutHighlight1Title: '',
     aboutHighlight1Desc: '',
     aboutHighlight2Title: '',
-    aboutHighlight2Desc: ''
+    aboutHighlight2Desc: '',
+    aboutAcademicEn: '',
+    aboutAcademicBn: '',
+    aboutAcademicMetrics: '',
+    aboutSpecFront: '',
+    aboutSpecBack: '',
+    aboutSpecCloud: '',
+    aboutVisionsEn: '',
+    aboutVisionsBn: '',
+    aboutVisionsList: ''
   });
   const [skillsList, setSkillsList] = useState<Skill[]>([]);
   const [projectsList, setProjectsList] = useState<Project[]>([]);
@@ -1082,6 +1091,122 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
                         placeholder="E.g., Experienced in Firebase, Docker..."
                       />
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ADVANCED ABOUT ME SECTIONS */}
+              <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl space-y-6">
+                <div>
+                  <h4 className="text-sm font-sans font-bold text-white flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                    Academic, Specializations & Career Visions
+                  </h4>
+                  <p className="text-[10px] text-slate-500 font-mono tracking-wide mt-1">
+                    Manage the detailed academic background, technological specializations deep-dive, and long-term career visions sections of your About Me page.
+                  </p>
+                </div>
+                
+                <div className="space-y-4 border-t border-slate-800/60 pt-4">
+                  <h5 className="text-xs font-sans font-bold text-white flex items-center gap-1.5 uppercase text-purple-400">1. Academic Background & Career Evolution</h5>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-mono uppercase tracking-widest text-slate-400 block">English Biography (Supporting Newlines)</label>
+                    <textarea
+                      rows={4}
+                      value={profileForm.aboutAcademicEn || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, aboutAcademicEn: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                      placeholder="Enter English Academic & Career Evolution paragraphs..."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-mono uppercase tracking-widest text-slate-400 block">Bangla Translation (Supporting Newlines)</label>
+                    <textarea
+                      rows={4}
+                      value={profileForm.aboutAcademicBn || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, aboutAcademicBn: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                      placeholder="Enter Bangla Academic & Career Evolution paragraphs..."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-mono uppercase tracking-widest text-slate-400 block">Operational Mastery Highlight line</label>
+                    <input
+                      type="text"
+                      value={profileForm.aboutAcademicMetrics || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, aboutAcademicMetrics: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                      placeholder="Operational Mastery: Structured Query Design..."
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4 border-t border-slate-800/60 pt-4">
+                  <h5 className="text-xs font-sans font-bold text-white flex items-center gap-1.5 uppercase text-purple-400">2. Technological Specializations Deep-Dive</h5>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-mono uppercase tracking-widest text-slate-400 block">Frontend Architecture Description</label>
+                    <textarea
+                      rows={3}
+                      value={profileForm.aboutSpecFront || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, aboutSpecFront: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                      placeholder="Frontend architecture specialized details..."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-mono uppercase tracking-widest text-slate-400 block">Backend Engineering Description</label>
+                    <textarea
+                      rows={3}
+                      value={profileForm.aboutSpecBack || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, aboutSpecBack: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                      placeholder="Backend engineering specialized details..."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-mono uppercase tracking-widest text-slate-400 block">Cloud & Infrastructure Description</label>
+                    <textarea
+                      rows={3}
+                      value={profileForm.aboutSpecCloud || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, aboutSpecCloud: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                      placeholder="Cloud & Infrastructure specialized details..."
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4 border-t border-slate-800/60 pt-4">
+                  <h5 className="text-xs font-sans font-bold text-white flex items-center gap-1.5 uppercase text-purple-400">3. Engineering Visions & Strategic Goals</h5>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-mono uppercase tracking-widest text-slate-400 block">Visions English Description (Supporting Newlines)</label>
+                    <textarea
+                      rows={3}
+                      value={profileForm.aboutVisionsEn || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, aboutVisionsEn: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                      placeholder="Strategic engineering visions English bio..."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-mono uppercase tracking-widest text-slate-400 block">Visions Bangla Description (Supporting Newlines)</label>
+                    <textarea
+                      rows={3}
+                      value={profileForm.aboutVisionsBn || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, aboutVisionsBn: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                      placeholder="Strategic engineering visions Bangla bio..."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-mono uppercase tracking-widest text-slate-400 block">Future Goals (Comma-separated List)</label>
+                    <textarea
+                      rows={3}
+                      value={profileForm.aboutVisionsList || ''}
+                      onChange={(e) => setProfileForm(prev => ({ ...prev, aboutVisionsList: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 text-white rounded-xl text-xs focus:outline-none focus:border-purple-500"
+                      placeholder="E.g., Distributed systems design, Advanced serverless orchestration, Deep search engine discovery layouts"
+                    />
+                    <span className="text-[9px] text-slate-500 font-mono block mt-1">Separate each bullet point with a comma (e.g. Goal 1, Goal 2, Goal 3).</span>
                   </div>
                 </div>
               </div>

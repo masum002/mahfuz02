@@ -30,6 +30,24 @@ export default function About({ profile, isDetailedTab = false }: AboutProps) {
   const highlight2Title = profile.aboutHighlight2Title || "Cloud & Serverless";
   const highlight2Desc = profile.aboutHighlight2Desc || "Experienced in Firebase, Docker, Google Cloud Platform, and custom CI/CD pipelines.";
 
+  const academicEn = profile.aboutAcademicEn || "My developer journey initiated in the year 2018 at Sylhet Polytechnic Institute, where I pursued a Diploma in Computer Technology. This laid down a strong structural bedrock in algorithm designs, database principles, and system hardware. Later, to broaden my computational perspectives, I enrolled in a Bachelor of Science program in Computer Science & Engineering at Prime University (2022-2026).\n\nThis hybrid combination of comprehensive diploma-level practical engineering and high-level academic theory equipped me with a profound understanding of low-level system mechanics, memory allocations, and multi-tier network communication frameworks.";
+  const academicBn = profile.aboutAcademicBn || "কম্পিউটার প্রযুক্তির সাথে আমার নিবিড় সম্পর্কের সূচনা ২০১৮ সালে সিলেট পলিটেকনিক ইনস্টিটিউট থেকে ডিপ্লোমা ইন কম্পিউটার টেকনোলজি অধ্যয়নের মধ্য দিয়ে। এখানে প্রোগ্রামিং লজিক, অ্যালগরিদম ডিজাইন এবং নেটওয়ার্ক আর্কিটেকচারের তাত্ত্বিক ও ব্যবহারিক চমৎকার ভিত্তি লাভ করি। পরবর্তীতে প্রাইম ইউনিভার্সিটি থেকে কম্পিউটার সায়েন্স অ্যান্ড ইঞ্জিনিয়ারিং-এ স্নাতক (B.Sc. in CSE) করার মাধ্যমে আমার দক্ষতা ও প্রযুক্তিগত জ্ঞানকে আরও একধাপ ওপরে নিয়ে যাই।";
+  const academicMetrics = profile.aboutAcademicMetrics || "Operational Mastery: Structured Query Design, NextJS Server Actions, distributed logging paradigms, and multi-threaded event-loops.";
+
+  const specFront = profile.aboutSpecFront || "Designing highly isomorphic, search-engine-optimized client interfaces using Next.js (App Router), React 19, and type-safe systems via TypeScript. Focused on reducing Cumulative Layout Shifts (CLS), mastering responsive layouts with Tailwind, and injecting high-frame-rate modular animations with Framer Motion.";
+  const specBack = profile.aboutSpecBack || "Building low-latency, resilient microservices with Node.js (NestJS / Express) and Go (Golang). Highly skilled in architecting safe query layers, optimizing indexing structures in relational systems like PostgreSQL, managing key-value stores with Redis, and establishing persistent, authenticated Firestore databases.";
+  const specCloud = profile.aboutSpecCloud || "Orchestrating containerized deployments with Docker and Kubernetes. Experienced in designing cloud structures on Google Cloud Platform (GCP), configuring secure continuous integration/continuous deployment (CI/CD) pipelines, and setting up reverse proxy gateways like Nginx.";
+
+  const visionsEn = profile.aboutVisionsEn || "As an engineer dedicated to constant self-refinement, my primary professional target is to bridge the gap between high-scale systems architecture and fine-tuned user interface arts. I strive to build applications where security, accessibility, and sheer speed are treated as first-class citizens.\n\nMy current goals focus on exploring automated serverless configurations, mastering event-driven message brokers (like Apache Kafka), and designing deep SEO layouts that index flawlessly on crawl systems without layout shifts.";
+  const visionsBn = profile.aboutVisionsBn || "একজন ইঞ্জিনিয়ার হিসেবে আমার মূল লক্ষ্য হলো অত্যন্ত জটিল ব্যাকএন্ড আর্কিটেকচার এবং আকর্ষণীয় পিক্সেল-পারফেক্ট ইন্টারফেসের চমৎকার মেলবন্ধন ঘটানো। আমি বিশ্বাস করি, একটি সফল সফটওয়্যার মানে শুধুমাত্র ফাংশনাল কোড নয়, বরং এর সিকিউরিটি, ইউজার এক্সপেরিয়েন্স এবং পারফরম্যান্স অপ্টিমাইজেশন প্রতিটি স্তরে সমানভাবে ফুটিয়ে তোলা।";
+  const visionsList = profile.aboutVisionsList
+    ? profile.aboutVisionsList.split(',').map((item: string) => item.trim()).filter(Boolean)
+    : [
+        "Distributed systems design with strict high-concurrency event loops.",
+        "Advanced serverless orchestration and continuous deployment pipelines.",
+        "Deep search engine discovery layouts and semantic metadata structures."
+      ];
+
   // If we are on the dedicated about page, render the full detailed view directly
   if (isDetailedTab) {
     return (
@@ -150,19 +168,19 @@ export default function About({ profile, isDetailedTab = false }: AboutProps) {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-slate-300 leading-relaxed font-sans">
               <div className="space-y-4">
-                <p>
-                  My developer journey initiated in the year 2018 at <strong>Sylhet Polytechnic Institute</strong>, where I pursued a Diploma in Computer Technology. This laid down a strong structural bedrock in algorithm designs, database principles, and system hardware. Later, to broaden my computational perspectives, I enrolled in a Bachelor of Science program in Computer Science & Engineering at <strong>Prime University</strong> (2022-2026).
-                </p>
-                <p>
-                  This hybrid combination of comprehensive diploma-level practical engineering and high-level academic theory equipped me with a profound understanding of low-level system mechanics, memory allocations, and multi-tier network communication frameworks.
-                </p>
+                {academicEn.split('\n').map((para, idx) => (
+                  <p key={idx}>{para}</p>
+                ))}
               </div>
               <div className="space-y-4">
-                <p className="text-slate-400">
-                  <em>বাংলায় আমার প্রেক্ষাপট:</em> কম্পিউটার প্রযুক্তির সাথে আমার নিবিড় সম্পর্কের সূচনা ২০১৮ সালে সিলেট পলিটেকনিক ইনস্টিটিউট থেকে ডিপ্লোমা ইন কম্পিউটার টেকনোলজি অধ্যয়নের মধ্য দিয়ে। এখানে প্রোগ্রামিং লজিক, অ্যালগরিদম ডিজাইন এবং নেটওয়ার্ক আর্কিটেকচারের তাত্ত্বিক ও ব্যবহারিক চমৎকার ভিত্তি লাভ করি। পরবর্তীতে প্রাইম ইউনিভার্সিটি থেকে কম্পিউটার সায়েন্স অ্যান্ড ইঞ্জিনিয়ারিং-এ স্নাতক (B.Sc. in CSE) করার মাধ্যমে আমার দক্ষতা ও প্রযুক্তিগত জ্ঞানকে আরও একধাপ ওপরে নিয়ে যাই।
-                </p>
+                {academicBn.split('\n').map((para, idx) => (
+                  <p key={idx} className="text-slate-400">
+                    {idx === 0 && !para.startsWith('বাংলায় আমার প্রেক্ষাপট:') && !para.startsWith('<em>') && <em className="not-italic text-slate-400">বাংলায় আমার প্রেক্ষাপট: </em>}
+                    {para}
+                  </p>
+                ))}
                 <p className="text-slate-450 text-xs font-mono">
-                  &gt; Operational Mastery: Structured Query Design, NextJS Server Actions, distributed logging paradigms, and multi-threaded event-loops.
+                  &gt; {academicMetrics}
                 </p>
               </div>
             </div>
@@ -182,7 +200,7 @@ export default function About({ profile, isDetailedTab = false }: AboutProps) {
                   Frontend Architecture
                 </h4>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Designing highly isomorphic, search-engine-optimized client interfaces using <strong>Next.js (App Router)</strong>, <strong>React 19</strong>, and type-safe systems via <strong>TypeScript</strong>. Focused on reducing Cumulative Layout Shifts (CLS), mastering responsive layouts with Tailwind, and injecting high-frame-rate modular animations with Framer Motion.
+                  {specFront}
                 </p>
               </div>
 
@@ -192,7 +210,7 @@ export default function About({ profile, isDetailedTab = false }: AboutProps) {
                   Backend Engineering
                 </h4>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Building low-latency, resilient microservices with <strong>Node.js (NestJS / Express)</strong> and <strong>Go (Golang)</strong>. Highly skilled in architecting safe query layers, optimizing indexing structures in relational systems like PostgreSQL, managing key-value stores with Redis, and establishing persistent, authenticated Firestore databases.
+                  {specBack}
                 </p>
               </div>
 
@@ -202,7 +220,7 @@ export default function About({ profile, isDetailedTab = false }: AboutProps) {
                   Cloud & Infrastructure
                 </h4>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Orchestrating containerized deployments with <strong>Docker</strong> and <strong>Kubernetes</strong>. Experienced in designing cloud structures on <strong>Google Cloud Platform (GCP)</strong>, configuring secure continuous integration/continuous deployment (CI/CD) pipelines, and setting up reverse proxy gateways like Nginx.
+                  {specCloud}
                 </p>
               </div>
             </div>
@@ -219,21 +237,21 @@ export default function About({ profile, isDetailedTab = false }: AboutProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-slate-300 leading-relaxed font-sans">
               <div className="space-y-4">
-                <p>
-                  As an engineer dedicated to constant self-refinement, my primary professional target is to bridge the gap between high-scale systems architecture and fine-tuned user interface arts. I strive to build applications where security, accessibility, and sheer speed are treated as first-class citizens.
-                </p>
-                <p>
-                  My current goals focus on exploring automated serverless configurations, mastering event-driven message brokers (like Apache Kafka), and designing deep SEO layouts that index flawlessly on crawl systems without layout shifts.
-                </p>
+                {visionsEn.split('\n').map((para, idx) => (
+                  <p key={idx}>{para}</p>
+                ))}
               </div>
               <div className="space-y-4">
-                <p className="text-slate-400">
-                  <em>আমার ভবিষ্যৎ কর্মপরিকল্পনা:</em> একজন ইঞ্জিনিয়ার হিসেবে আমার মূল লক্ষ্য হলো অত্যন্ত জটিল ব্যাকএন্ড আর্কিটেকচার এবং আকর্ষণীয় পিক্সেল-পারফেক্ট ইন্টারফেসের চমৎকার মেলবন্ধন ঘটানো। আমি বিশ্বাস করি, একটি সফল সফটওয়্যার মানে শুধুমাত্র ফাংশนাল কোড নয়, বরং এর সিকিউরিটি, ইউজার এক্সপেরিয়েন্স এবং পারফরম্যান্স অপ্টিমাইজেশন প্রতিটি স্তরে সমানভাবে ফুটিয়ে তোলা।
-                </p>
+                {visionsBn.split('\n').map((para, idx) => (
+                  <p key={idx} className="text-slate-400">
+                    {idx === 0 && !para.startsWith('আমার ভবিষ্যৎ কর্মপরিকল্পনা:') && !para.startsWith('<em>') && <em className="not-italic text-slate-400">আমার ভবিষ্যৎ কর্মপরিকল্পনা: </em>}
+                    {para}
+                  </p>
+                ))}
                 <ul className="space-y-2 text-xs text-slate-500 font-mono pl-4 list-disc">
-                  <li>Distributed systems design with strict high-concurrency event loops.</li>
-                  <li>Advanced serverless orchestration and continuous deployment pipelines.</li>
-                  <li>Deep search engine discovery layouts and semantic metadata structures.</li>
+                  {visionsList.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
                 </ul>
               </div>
             </div>
