@@ -60,6 +60,7 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [copiedDomain, setCopiedDomain] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'skills' | 'projects' | 'photography' | 'contact'>('profile');
 
   // Unified status banner messages
@@ -105,7 +106,22 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
   const [skillsList, setSkillsList] = useState<Skill[]>([]);
   const [projectsList, setProjectsList] = useState<Project[]>([]);
   const [photographyList, setPhotographyList] = useState<PhotographyItem[]>([]);
-  const [contactForm, setContactForm] = useState<Contact>({ email: '', phone: '', address: '', github: '', linkedin: '', twitter: '', facebook: '', updatedAt: '' });
+  const [contactForm, setContactForm] = useState<Contact>({
+    email: '',
+    phone: '',
+    address: '',
+    github: '',
+    linkedin: '',
+    twitter: '',
+    facebook: '',
+    heading: '',
+    subtitle: '',
+    availability: '',
+    responseTime: '',
+    whatsapp: '',
+    telegram: '',
+    updatedAt: ''
+  });
 
   // CRUD working states
   const [skillForm, setSkillForm] = useState<{ id?: string; name: string; category: string; percentage: number }>({ name: '', category: 'Frontend', percentage: 80 });
@@ -507,12 +523,74 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
             <p className="text-slate-400 text-xs font-mono mt-2 uppercase tracking-widest text-purple-400">Secure Google Sign-In</p>
           </div>
 
-          {authError && (
+          {authError && (authError.includes('unauthorized-domain') || authError.includes('domain is not authorized')) ? (
+            <div className="p-5 bg-amber-500/10 border border-amber-500/20 rounded-2xl space-y-4 text-left z-10 font-sans">
+              <div className="flex items-start gap-2.5 text-amber-400">
+                <ShieldAlert size={18} className="shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h3 className="text-xs font-bold text-white">Authorized Domain Whitelist Required</h3>
+                  <p className="text-[11px] text-amber-300 leading-normal">
+                    Firebase has blocked this login attempt because the domain of this application instance isn't whitelisted.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2 border-t border-slate-800/80 pt-3">
+                <h4 className="text-[10px] font-mono uppercase tracking-widest text-slate-400">Easy Fix Steps:</h4>
+                <ol className="text-xs text-slate-300 space-y-2 list-decimal pl-4 leading-normal">
+                  <li>
+                    Go to your <a href="https://console.firebase.google.com/project/profileview-6e036/authentication/settings" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline font-semibold inline-flex items-center gap-0.5">Firebase Auth Settings <ExternalLink size={10} /></a>.
+                  </li>
+                  <li>
+                    Scroll to the <strong>Authorized domains</strong> section.
+                  </li>
+                  <li>
+                    Click <strong>Add domain</strong> and add both of the hostnames below.
+                  </li>
+                </ol>
+              </div>
+
+              <div className="space-y-2.5 border-t border-slate-800/80 pt-3">
+                <h4 className="text-[10px] font-mono uppercase tracking-widest text-slate-400">Hostnames to register:</h4>
+                <div className="space-y-2 font-mono text-[11px]">
+                  {[
+                    typeof window !== 'undefined' ? window.location.hostname : "",
+                    "ais-dev-7ydkkoxbt24i4epdzpgpmu-376430413500.asia-southeast1.run.app",
+                    "ais-pre-7ydkkoxbt24i4epdzpgpmu-376430413500.asia-southeast1.run.app"
+                  ].filter(Boolean).reduce((acc: string[], cur) => acc.includes(cur) ? acc : [...acc, cur], []).map((domain) => (
+                    <div key={domain} className="flex items-center justify-between bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">
+                      <span className="text-slate-300 select-all truncate max-w-[180px]">{domain}</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(domain);
+                          setCopiedDomain(domain);
+                          setTimeout(() => setCopiedDomain(null), 2000);
+                        }}
+                        className="px-2 py-1 bg-slate-900 hover:bg-purple-600/30 text-purple-400 hover:text-white rounded-lg text-[9px] font-sans font-medium transition-colors border border-slate-800/50"
+                      >
+                        {copiedDomain === domain ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-slate-800/80 pt-3 flex justify-between items-center text-[10px]">
+                <span className="text-slate-500 font-mono">ID: profileview-6e036</span>
+                <button
+                  onClick={() => setAuthError(null)}
+                  className="text-purple-400 hover:text-purple-300 font-semibold"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ) : authError ? (
             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3 text-red-400 text-xs leading-relaxed z-10 font-sans">
               <AlertTriangle size={16} className="shrink-0 mt-0.5" />
               <span>{authError}</span>
             </div>
-          )}
+          ) : null}
 
           <div className="space-y-4">
             <div className="p-5 bg-slate-950/60 rounded-2xl border border-slate-800/85 space-y-3 text-center">
@@ -1691,40 +1769,125 @@ export default function AdminPanel({ onDataChange }: AdminPanelProps) {
             </div>
 
             <form onSubmit={handleContactSave} className="bg-slate-900 border border-slate-800 rounded-2.5xl p-6 md:p-8 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">General Mail Email</label>
-                  <input
-                    type="email"
-                    required
-                    value={contactForm.email}
-                    onChange={(e) => setContactForm(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans"
-                    placeholder="email@example.com"
-                  />
+              {/* Heading & Description controls */}
+              <div className="space-y-4 border-b border-slate-800 pb-6">
+                <h4 className="text-xs font-sans font-bold text-white uppercase tracking-wider text-purple-400">Header Content Customization</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Contact Custom Headline (Heading)</label>
+                    <input
+                      type="text"
+                      value={contactForm.heading || ''}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, heading: e.target.value }))}
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans"
+                      placeholder="e.g. Connect Directly With Me"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Contact Custom Description (Subtitle)</label>
+                    <textarea
+                      rows={2}
+                      value={contactForm.subtitle || ''}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, subtitle: e.target.value }))}
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans"
+                      placeholder="e.g. Let's assemble a secure cloud integration, design a modern front-end workflow..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Status and SLA Promises */}
+              <div className="space-y-4 border-b border-slate-800 pb-6">
+                <h4 className="text-xs font-sans font-bold text-white uppercase tracking-wider text-purple-400">Status & Response SLA</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Availability status badge</label>
+                    <input
+                      type="text"
+                      value={contactForm.availability || ''}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, availability: e.target.value }))}
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans"
+                      placeholder="e.g. Available for custom projects"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Response SLA promise</label>
+                    <input
+                      type="text"
+                      value={contactForm.responseTime || ''}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, responseTime: e.target.value }))}
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans"
+                      placeholder="e.g. Usually replies within 2 hours"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Base details */}
+              <div className="space-y-4 border-b border-slate-800 pb-6">
+                <h4 className="text-xs font-sans font-bold text-white uppercase tracking-wider text-purple-400">Base Communication Details</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">General Mail Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={contactForm.email}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, email: e.target.value }))}
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans"
+                      placeholder="email@example.com"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">General Telephone Line</label>
+                    <input
+                      type="text"
+                      value={contactForm.phone}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, phone: e.target.value }))}
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans"
+                      placeholder="+1 (555) 124-3450"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">General Telephone Line</label>
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">General Node Location Coordinates</label>
                   <input
                     type="text"
-                    value={contactForm.phone}
-                    onChange={(e) => setContactForm(prev => ({ ...prev, phone: e.target.value }))}
+                    value={contactForm.address}
+                    onChange={(e) => setContactForm(prev => ({ ...prev, address: e.target.value }))}
                     className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans"
-                    placeholder="+1 (555) 124-3450"
+                    placeholder="E.g., San Francisco, CA"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">General Node Location Coordinates</label>
-                <input
-                  type="text"
-                  value={contactForm.address}
-                  onChange={(e) => setContactForm(prev => ({ ...prev, address: e.target.value }))}
-                  className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans"
-                  placeholder="E.g., San Francisco, CA"
-                />
+              {/* Instant Messengers */}
+              <div className="space-y-4 border-b border-slate-800 pb-6">
+                <h4 className="text-xs font-sans font-bold text-white uppercase tracking-wider text-purple-400">Instant Messenger Hooks</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">WhatsApp Handle / Link</label>
+                    <input
+                      type="text"
+                      value={contactForm.whatsapp || ''}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, whatsapp: e.target.value }))}
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans font-mono"
+                      placeholder="e.g. https://wa.me/8801700000000"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">Telegram Handle / Link</label>
+                    <input
+                      type="text"
+                      value={contactForm.telegram || ''}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, telegram: e.target.value }))}
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-xl text-sm focus:outline-none focus:border-purple-500 font-sans font-mono"
+                      placeholder="e.g. https://t.me/username"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="border-t border-slate-800/80 pt-6 space-y-6">

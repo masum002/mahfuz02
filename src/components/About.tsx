@@ -138,6 +138,106 @@ export default function About({ profile, isDetailedTab = false }: AboutProps) {
               </div>
             </div>
           </div>
+
+          {/* Section: Academic Background & Career Evolution */}
+          <div className="p-8 sm:p-10 rounded-3xl bg-slate-900/30 border border-slate-800/80 space-y-6">
+            <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+              <span className="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
+                <Code2 size={16} />
+              </span>
+              <h3 className="text-xl font-sans font-bold text-white">Background & Professional Evolution</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-slate-300 leading-relaxed font-sans">
+              <div className="space-y-4">
+                <p>
+                  My developer journey initiated in the year 2018 at <strong>Sylhet Polytechnic Institute</strong>, where I pursued a Diploma in Computer Technology. This laid down a strong structural bedrock in algorithm designs, database principles, and system hardware. Later, to broaden my computational perspectives, I enrolled in a Bachelor of Science program in Computer Science & Engineering at <strong>Prime University</strong> (2022-2026).
+                </p>
+                <p>
+                  This hybrid combination of comprehensive diploma-level practical engineering and high-level academic theory equipped me with a profound understanding of low-level system mechanics, memory allocations, and multi-tier network communication frameworks.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <p className="text-slate-400">
+                  <em>বাংলায় আমার প্রেক্ষাপট:</em> কম্পিউটার প্রযুক্তির সাথে আমার নিবিড় সম্পর্কের সূচনা ২০১৮ সালে সিলেট পলিটেকনিক ইনস্টিটিউট থেকে ডিপ্লোমা ইন কম্পিউটার টেকনোলজি অধ্যয়নের মধ্য দিয়ে। এখানে প্রোগ্রামিং লজিক, অ্যালগরিদম ডিজাইন এবং নেটওয়ার্ক আর্কিটেকচারের তাত্ত্বিক ও ব্যবহারিক চমৎকার ভিত্তি লাভ করি। পরবর্তীতে প্রাইম ইউনিভার্সিটি থেকে কম্পিউটার সায়েন্স অ্যান্ড ইঞ্জিনিয়ারিং-এ স্নাতক (B.Sc. in CSE) করার মাধ্যমে আমার দক্ষতা ও প্রযুক্তিগত জ্ঞানকে আরও একধাপ ওপরে নিয়ে যাই।
+                </p>
+                <p className="text-slate-450 text-xs font-mono">
+                  &gt; Operational Mastery: Structured Query Design, NextJS Server Actions, distributed logging paradigms, and multi-threaded event-loops.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Technological Specializations Deep-Dive */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2.5 pb-2 border-b border-slate-800">
+              <Terminal size={16} className="text-pink-400" />
+              <h3 className="text-xl font-sans font-bold text-white uppercase tracking-wider">Technological Specializations Deep-Dive</h3>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
+                <h4 className="text-sm font-bold text-white font-sans flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                  Frontend Architecture
+                </h4>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Designing highly isomorphic, search-engine-optimized client interfaces using <strong>Next.js (App Router)</strong>, <strong>React 19</strong>, and type-safe systems via <strong>TypeScript</strong>. Focused on reducing Cumulative Layout Shifts (CLS), mastering responsive layouts with Tailwind, and injecting high-frame-rate modular animations with Framer Motion.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
+                <h4 className="text-sm font-bold text-white font-sans flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-pink-400" />
+                  Backend Engineering
+                </h4>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Building low-latency, resilient microservices with <strong>Node.js (NestJS / Express)</strong> and <strong>Go (Golang)</strong>. Highly skilled in architecting safe query layers, optimizing indexing structures in relational systems like PostgreSQL, managing key-value stores with Redis, and establishing persistent, authenticated Firestore databases.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
+                <h4 className="text-sm font-bold text-white font-sans flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                  Cloud & Infrastructure
+                </h4>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Orchestrating containerized deployments with <strong>Docker</strong> and <strong>Kubernetes</strong>. Experienced in designing cloud structures on <strong>Google Cloud Platform (GCP)</strong>, configuring secure continuous integration/continuous deployment (CI/CD) pipelines, and setting up reverse proxy gateways like Nginx.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Long-term Engineering & Career Goals */}
+          <div className="p-8 rounded-3xl bg-slate-900/30 border border-slate-800/80 space-y-6">
+            <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800/80">
+              <span className="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
+                <Sparkles size={16} />
+              </span>
+              <h3 className="text-xl font-sans font-bold text-white">Engineering Visions & Strategic Goals</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-slate-300 leading-relaxed font-sans">
+              <div className="space-y-4">
+                <p>
+                  As an engineer dedicated to constant self-refinement, my primary professional target is to bridge the gap between high-scale systems architecture and fine-tuned user interface arts. I strive to build applications where security, accessibility, and sheer speed are treated as first-class citizens.
+                </p>
+                <p>
+                  My current goals focus on exploring automated serverless configurations, mastering event-driven message brokers (like Apache Kafka), and designing deep SEO layouts that index flawlessly on crawl systems without layout shifts.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <p className="text-slate-400">
+                  <em>আমার ভবিষ্যৎ কর্মপরিকল্পনা:</em> একজন ইঞ্জিনিয়ার হিসেবে আমার মূল লক্ষ্য হলো অত্যন্ত জটিল ব্যাকএন্ড আর্কিটেকচার এবং আকর্ষণীয় পিক্সেল-পারফেক্ট ইন্টারফেসের চমৎকার মেলবন্ধন ঘটানো। আমি বিশ্বাস করি, একটি সফল সফটওয়্যার মানে শুধুমাত্র ফাংশนাল কোড নয়, বরং এর সিকিউরিটি, ইউজার এক্সপেরিয়েন্স এবং পারফরম্যান্স অপ্টিমাইজেশন প্রতিটি স্তরে সমানভাবে ফুটিয়ে তোলা।
+                </p>
+                <ul className="space-y-2 text-xs text-slate-500 font-mono pl-4 list-disc">
+                  <li>Distributed systems design with strict high-concurrency event loops.</li>
+                  <li>Advanced serverless orchestration and continuous deployment pipelines.</li>
+                  <li>Deep search engine discovery layouts and semantic metadata structures.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     );

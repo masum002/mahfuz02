@@ -64,6 +64,12 @@ export interface Contact {
   twitter: string;
   facebook?: string;
   updatedAt: string;
+  heading?: string;
+  subtitle?: string;
+  availability?: string;
+  responseTime?: string;
+  whatsapp?: string;
+  telegram?: string;
 }
 
 export interface PhotographyItem {

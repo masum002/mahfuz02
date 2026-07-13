@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Mail, Phone, MapPin, Send, Github, Linkedin, Twitter, AlertCircle, Facebook } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Github, Linkedin, Twitter, AlertCircle, Facebook, MessageCircle, Clock, CheckCircle } from 'lucide-react';
 import { Contact } from '../types';
 import SEO from './SEO';
 
@@ -14,6 +14,9 @@ export default function ContactSection({ contact }: ContactProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const isContactRoute = typeof window !== 'undefined' && (window.location.pathname === '/contact' || window.location.pathname === '/contact/');
+
+  const headingText = contact.heading || "Get in Touch";
+  const subtitleText = contact.subtitle || "Have a vision or requirement? Let's discuss details over mail or physical coordinates.";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +52,7 @@ export default function ContactSection({ contact }: ContactProps) {
             CONTACT
           </motion.div>
           <h2 className="text-3xl sm:text-4xl font-sans tracking-tight font-extrabold text-white">
-            Get in Touch
+            {headingText}
           </h2>
           <div className="w-12 h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mt-4" />
         </div>
@@ -64,12 +67,30 @@ export default function ContactSection({ contact }: ContactProps) {
           >
             <div className="p-8 sm:p-10 rounded-2xl bg-slate-900 bg-opacity-70 border border-slate-800 space-y-8 shadow-2xl relative overflow-hidden text-center">
               <div className="absolute top-0 right-0 p-6 opacity-[0.02] text-purple-400 font-mono text-7xl font-bold select-none pointer-events-none">
-                CONTACT
+                CONNECT
               </div>
+
+              {/* Controllable Availability SLA Badges */}
+              {(contact.availability || contact.responseTime) && (
+                <div className="flex flex-wrap items-center justify-center gap-3 pb-2">
+                  {contact.availability && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono tracking-wide uppercase bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full">
+                      <CheckCircle size={10} className="animate-pulse" />
+                      {contact.availability}
+                    </span>
+                  )}
+                  {contact.responseTime && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono tracking-wide uppercase bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-full">
+                      <Clock size={10} />
+                      {contact.responseTime}
+                    </span>
+                  )}
+                </div>
+              )}
               
               <div className="max-w-sm mx-auto">
                 <h3 className="text-xl sm:text-2xl font-sans font-bold text-white mb-3">Connect Directly</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">Have a vision or requirement? Let's discuss details over mail or physical coordinates.</p>
+                <p className="text-slate-400 text-sm leading-relaxed">{subtitleText}</p>
               </div>
 
               <div className="space-y-6 max-w-sm mx-auto text-left py-4">
@@ -103,6 +124,35 @@ export default function ContactSection({ contact }: ContactProps) {
                     <div>
                       <h4 className="text-xs font-mono uppercase tracking-wider text-slate-500">Location</h4>
                       <p className="text-slate-200 text-sm">{contact.address}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Instant Messenger links if available */}
+                {contact.whatsapp && (
+                  <div className="flex items-start gap-4">
+                    <span className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/10 shrink-0">
+                      <MessageCircle size={18} />
+                    </span>
+                    <div>
+                      <h4 className="text-xs font-mono uppercase tracking-wider text-slate-500">WhatsApp Chat</h4>
+                      <a href={contact.whatsapp} target="_blank" rel="noopener noreferrer" className="text-slate-200 text-sm hover:text-emerald-400 font-medium transition-colors">
+                        Open Instant Chat
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {contact.telegram && (
+                  <div className="flex items-start gap-4">
+                    <span className="p-3 bg-sky-500/10 text-sky-450 rounded-xl border border-sky-500/10 shrink-0">
+                      <Send size={18} />
+                    </span>
+                    <div>
+                      <h4 className="text-xs font-mono uppercase tracking-wider text-slate-500">Telegram Channel</h4>
+                      <a href={contact.telegram} target="_blank" rel="noopener noreferrer" className="text-slate-200 text-sm hover:text-sky-400 font-medium transition-colors">
+                        Send Direct Telegram
+                      </a>
                     </div>
                   </div>
                 )}

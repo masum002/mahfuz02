@@ -24,7 +24,7 @@ export const DEFAULT_PROFILE: Profile = {
   cvGender: "Male",
   cvLanguages: "Bangla (Native), English (Professional)",
   cvObjective: "Professional and highly motivated Software Engineer with 3+ years of experience in full-stack web architecture, looking to deliver elegant, secure, and modern digital products while tackling intricate development challenges.",
-  aboutDetailText: "হ্যালো, আমি মাহফুজ আর মাসুম (MAHFUZ R MASUM)। একজন প্যাশনেট এবং সার্টিফাইড Lead Full-Stack & Cloud Engineer। আমি বিগত কয়েক বছর ধরে রিয়্যাক্ট (React), টাইপস্ক্রিপ্ট (TypeScript), নোড জেএস (Node.js) এবং ক্লাউড কম্পিউটিং টেকনোলজি নিয়ে কাজ করছি।\n\nআমার মূল লক্ষ্য হলো যেকোনো জটিল বিজনেস রিকোয়ারমেন্টস এবং আর্কিটেকচারকে একটি দৃষ্টিনন্দন, অত্যন্ত দ্রুতগতিসম্পন্ন এবং স্কেলেবল ডিজিটাল অ্যাপ্লিকেশনে রূপান্তর করা। আমি প্রতিনিয়ত আধুনিক ওয়েব ট্রেন্ডস এবং সিকিউরিটি স্ট্যান্ডার্ডস অনুসরণ করে কোড লিখে থাকি।\n\nআমার কাজের অভিজ্ঞতা শুধু ফ্রন্টএন্ড ডিজাইনেই সীমাবদ্ধ নয়, বরং নোড জেএস মাইক্রোসার্ভিসেস, ক্লাউড নেটিভ ডেপ্লয়মেন্টস (GCP, Docker, Kubernetes) এবং সিকিউর ডেটাবেস অপ্টিমাইজেশন নিয়েও আমি সমানভাবে কাজ করি। প্রতিটি প্রজেক্টে পিক্সেল-পারফেক্ট ইউজার এক্সপেরিয়েন্স এবং ফ্লлеস অ্যানিমেশন যুক্ত করতে আমি দারুণ ভালোবাসি।",
+  aboutDetailText: "হ্যালো, আমি মাহফুজ আর মাসুম (MAHFUZ R MASUM)। একজন প্যাশনেট এবং সার্টিফাইড Lead Full-Stack & Cloud Engineer। আমি বিগত কয়েক বছর ধরে রিয়্যাক্ট (React), টাইপস্ক্রিপ্ট (TypeScript), নোড জেএস (Node.js) এবং ক্লাউড কম্পিউটিং টেকনোলজি নিয়ে কাজ করছি।\n\nআমার মূল লক্ষ্য হলো যেকোনো জটিল বিজনেস রিকোয়ারমেন্টস এবং আর্কিটেকচারকে একটি দৃষ্টিনন্দন, অত্যন্ত দ্রুতগতিসম্পন্ন এবং স্কেলেবল ডিজিটাল অ্যাপ্লিকেশনে রূপান্তর করা। আমি প্রতিনিয়ত আধুনিক ওয়েব ট্রেন্ডস এবং সিকিউরিটি স্ট্যান্ডার্ডস অনুসরণ করে কোড লিখে থাকি।\n\nআমার কাজের অভিজ্ঞতা শুধু ফ্রন্টএন্ড ডিজাইনেই সীমাবদ্ধ নয়, বরং নোড জেএস মাইক্রোসার্ভিসেস, ক্লাউড নেটিভ ডেপ্লয়মেন্টস (GCP, Docker, Kubernetes) এবং সিকিউর ডেটাবেস অপ্টিমাইজেশন নিয়েও আমি সমানভাবে কাজ করি। প্রতিটি প্রজেক্টে পিক্সেল-পারফেক্ট ইউজার এক্সপেরিয়েন্স এবং ফ্ললেস অ্যানিমেশন যুক্ত করতে আমি দারুণ ভালোবাসি।\n\nMy Engineering Philosophy is centered around deep mathematical optimization, structural type safety, and seamless design delivery. As an engineer, I refuse to write code that just 'works.' I write code that performs under pressure, scales horizontally, and scales down to zero when idle. My work in designing isomorphic web applications guarantees high performance, minimal layout shift, and exceptional accessibility compliance.\n\nIn addition to technical specifications, I am deeply driven by spatial aesthetics. I love landscape photography, capturing cosmic views of the night sky in Sajek, or neon light trails in rain-slicked Dhaka streets. This creative outlet keeps my UI eyes sharp, ensuring that every front-end canvas I code feels tactile, fluid, and beautifully balanced.",
   aboutImages: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600,https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=600,https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=600",
   aboutYearsExp: "5+",
   aboutProjectsDone: "40+",
@@ -91,6 +91,12 @@ export const DEFAULT_CONTACT: Contact = {
   linkedin: "https://linkedin.com/in/mahfujar003",
   twitter: "https://twitter.com/mahfujar003",
   facebook: "https://facebook.com/mahfujar003",
+  heading: "Connect Directly With Me",
+  subtitle: "Let's assemble a secure cloud integration, design a modern front-end workflow, or build high-concurrency Node servers.",
+  availability: "Available for custom projects",
+  responseTime: "Usually replies within 2 hours",
+  whatsapp: "https://wa.me/8801700000000",
+  telegram: "https://t.me/mahfuz_masum",
   updatedAt: new Date().toISOString()
 };
 
